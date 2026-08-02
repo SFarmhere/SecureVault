@@ -1,0 +1,69 @@
+# ============================================================================
+# SecureVault - Native Core CMake Config
+# Версия: @PROJECT_VERSION@
+# (c) 2026 SecureVault Contributors
+# Лицензия: GNU GPL v3
+#
+# НАЗНАЧЕНИЕ:
+#   Конфигурационный файл для find_package(SecureVaultNative).
+#   Позволяет внешним проектам подключать нативное ядро SecureVault.
+#
+# ИСПОЛЬЗОВАНИЕ:
+#   find_package(SecureVaultNative REQUIRED)
+#   target_link_libraries(myapp PRIVATE SecureVault::securevault_native)
+# ============================================================================
+
+@PACKAGE_INIT@
+
+# Проверка версии
+set_and_check(SECUREVAULT_NATIVE_VERSION "@PROJECT_VERSION@")
+set_and_check(SECUREVAULT_NATIVE_INCLUDE_DIR "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@/securevault")
+set_and_check(SECUREVAULT_NATIVE_LIBRARY_DIR "@PACKAGE_CMAKE_INSTALL_LIBDIR@")
+
+# Импорт целей
+include("${CMAKE_CURRENT_LIST_DIR}/SecureVaultNativeTargets.cmake")
+
+# Проверка, что цель существует
+if(NOT TARGET SecureVault::securevault_native)
+    message(FATAL_ERROR "SecureVaultNative: Target SecureVault::securevault_native not found. "
+                        "The build may have failed or the installation is corrupted.")
+endif()
+
+# Функция для проверки совместимости
+function(securevault_native_check_compatibility)
+    if(NOT SECUREVAULT_NATIVE_VERSION)
+        message(WARNING "SecureVaultNative: Version not specified. Assuming compatibility.")
+        return()
+    endif()
+
+    # Проверка major версии
+    string(REGEX MATCH "^([0-9]+)" _major "${SECUREVAULT_NATIVE_VERSION}")
+    if(_major AND NOT _major STREQUAL "@PROJECT_VERSION_MAJOR@")
+        message(WARNING "SecureVaultNative: Major version mismatch. "
+                        "Found ${_major}, expected @PROJECT_VERSION_MAJOR@. "
+                        "ABI compatibility is not guaranteed.")
+    endif()
+endfunction()
+
+# Выполняем проверку
+securevault_native_check_compatibility()
+
+# Экспортируем переменные для удобства
+set(SECUREVAULT_NATIVE_FOUND ON)
+set(SECUREVAULT_NATIVE_LIBRARIES SecureVault::securevault_native)
+set(SECUREVAULT_NATIVE_INCLUDE_DIRS "${SECUREVAULT_NATIVE_INCLUDE_DIR}")
+
+# Информационные сообщения
+if(NOT SecureVaultNative_FIND_QUIETLY)
+    message(STATUS "SecureVaultNative ${SECUREVAULT_NATIVE_VERSION} found")
+    message(STATUS "  Include dir: ${SECUREVAULT_NATIVE_INCLUDE_DIR}")
+    message(STATUS "  Library dir: ${SECUREVAULT_NATIVE_LIBRARY_DIR}")
+    message(STATUS "  Libraries:   ${SECUREVAULT_NATIVE_LIBRARIES}")
+endif()
+
+# Проверка обязательных компонентов
+if(SecureVaultNative_FIND_REQUIRED)
+    if(NOT SECUREVAULT_NATIVE_FOUND)
+        message(FATAL_ERROR "SecureVaultNative: Required package not found!")
+    endif()
+endif()

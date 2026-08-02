@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ============================================================
+      # ЗАВИСИМОСТИ
+      # ============================================================
+
+      - name: Install dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libpcsclite-dev \
+            pcscd \
+            pkg-config \
+            libssl-dev \
+            libgtest-dev \
+            libp11-dev \
+            libudev-dev
+
+      - name: Install dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew update
+          brew install \
+            pcsc-lite \
+            pkg-config \
+            openssl \
+            googletest
+          echo "PKG_CONFIG_PATH=$(brew --prefix)/opt/pcsc-lite/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+
+      - name: Setup vcpkg (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          git clone https://github.com/Microsoft/vcpkg.git
+          cd vcpkg
+          .\bootstrap-vcpkg.bat
+          .\vcpkg install pcsc-lite:x64-windows
+          .\vcpkg install openssl:x64-windows
+          .\vcpkg install gtest:x64-windows
+          echo "VCPKG_ROOT=$env:GITHUB_WORKSPACE/vcpkg" >> $env:GITHUB_ENV
+          echo "$env:GITHUB_WORKSPACE/vcpkg/installed/x64-windows/bin" >> $env:GITHUB_PATH
+
+      # ============================================================
+      # КОНФИГУРАЦИЯ
+      # ============================================================
+
+      - name: Configure CMake (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cmake -B build -S native/pkcs11_module \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DSECUREVAULT_ENABLE_TESTING=OFF \
+            -DSECUREVAULT_ENABLE_PCSC=ON
+
+      - name: Configure CMake (Windows)
+        if: matrix.os == 'windows-latest'
+        run: cmake -B build -S native/pkcs11_module -DCMAKE_BUILD_TYPE=Debug -DSECUREVAULT_ENABLE_TESTING=OFF -DSECUREVAULT_ENABLE_PCSC=ON -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+
+
+
+      # ============================================================
+      # СБОРКА
+      # ============================================================
+
+      - name: Build (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cmake --build build --parallel $(nproc)
+
+      - name: Build (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cmake --build build --config Debug --parallel
+
+      # ============================================================
+      # ТЕСТЫ
+      # ============================================================
+
+      - name: Test (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cd build
+          ctest --output-on-failure --timeout 60
+
+      - name: Test (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd build
+          ctest --output-on-failure --timeout 60 --build-config Debug
+
+      # ============================================================
+      # АРТЕФАКТЫ (для отладки)
+      # ============================================================
+
+      - name: Upload artifacts (Unix)
+        if: matrix.os != 'windows-latest' && failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ matrix.os }}
+          path: build/CMakeFiles/CMakeOutput.log
+          retention-days: 3
+
+      - name: Upload artifacts (Windows)
+        if: matrix.os == 'windows-latest' && failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-windows
+          path: build/CMakeFiles/CMakeOutput.log
+          retention-days: 3

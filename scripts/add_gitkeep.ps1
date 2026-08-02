@@ -1,0 +1,1 @@
+dir -Directory -Recurse | ? {!$_.GetFiles() -and $_.Name -notmatch '^\.'} | % { ni $_.FullName\.gitkeep }

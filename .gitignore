@@ -1,0 +1,298 @@
+# === Byte-compiled / optimized / DLL files ===
+__pycache__/
+*.py[cod]
+*$py.class
+
+# === C/C++ extensions ===
+*.so
+*.dll
+*.dylib
+*.lib
+*.exp
+*.pdb
+*.ilk
+*.idb
+
+# === Distribution / packaging ===
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# === PyInstaller ===
+*.manifest
+*.spec
+!SecureVault.spec          # ИСКЛЮЧЕНИЕ: твой spec файл нужен в репозитории!
+
+# === Installer logs ===
+pip-log.txt
+pip-delete-this-directory.txt
+
+# === Unit test / coverage reports ===
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# === Translations ===
+*.mo
+*.pot
+
+# === Django/Flask stuff ===
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+instance/
+.webassets-cache
+
+# === Scrapy ===
+.scrapy
+
+# === Sphinx documentation ===
+docs/_build/
+
+# === PyBuilder ===
+.pybuilder/
+target/
+
+# === Jupyter Notebook ===
+.ipynb_checkpoints
+
+# === IPython ===
+profile_default/
+ipython_config.py
+
+# === PEP 582 ===
+__pypackages__/
+
+# === Celery ===
+celerybeat-schedule
+celerybeat.pid
+
+# === SageMath ===
+*.sage.py
+
+# === Environments ===
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# === IDE - VS Code ===
+.vscode/
+!.vscode/launch.json      # ИСКЛЮЧЕНИЕ: дебаг конфиг можно хранить
+!.vscode/tasks.json       # ИСКЛЮЧЕНИЕ: задачи сборки
+!.vscode/settings.json    # ИСКЛЮЧЕНИЕ: настройки проекта
+
+# === IDE - JetBrains (IntelliJ, PyCharm, CLion, WebStorm) ===
+.idea/
+!.idea/                   # НЕ игнорировать всю папку .idea/ полностью
+!.idea/*.xml             # Сохраняем конфиги проекта
+!.idea/runConfigurations/ # Сохраняем конфигурации запуска
+!.idea/dataSources/       # Сохраняем подключения к БД
+!.idea/modules.xml        # Сохраняем структуру модулей
+!.idea/vcs.xml           # Сохраняем настройки Git
+
+# === IDE - Cursor ===
+.cursorignore
+.cursorindexingignore
+
+# === Python type checkers ===
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+
+# === C/C++ build artifacts ===
+native/**/build/
+native/**/cmake-build-*/
+native/**/CMakeFiles/
+native/**/Makefile
+native/**/CMakeCache.txt
+native/**/cmake_install.cmake
+native/**/*.o
+native/**/*.obj
+native/**/*.a
+native/**/*.so.*
+native/**/output/
+native/**/_deps/
+
+# === Windows specific ===
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# === macOS specific ===
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# === Linux specific ===
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# === SecureVault SPECIFIC ===
+
+## Артефакты сборки (полностью игнорировать)
+artifacts/
+**/artifacts/
+
+## Скомпилированные библиотеки - НО НЕ ИСХОДНИКИ!
+# НЕ игнорируем lib/ - там готовые бинарники для дистрибуции!
+# Но игнорируем временные файлы в lib/
+lib/**/*.tmp
+lib/**/*.temp
+
+## База данных - локальные файлы
+*.db
+*.sqlite
+*.sqlite3
+*.postgres
+database/data/
+database/postgres_data/
+
+## Логи
+**/logs/
+**/*.log
+!docs/**/*.log          # Исключение: документация
+
+## Кэш
+**/__pycache__/
+**/.cache/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+
+## Временные файлы тестов
+**/test_data/temp_*
+**/test_data/output/
+**/integration/results/
+
+## Node.js
+web/frontend/node_modules/
+web/frontend/dist/
+web/frontend/.vite/
+web/frontend/.vitepress/dist/
+web/frontend/.nuxt/
+web/frontend/.output/
+web/frontend/.vercel/
+web/frontend/.netlify/
+web/frontend/package-lock.json
+web/frontend/yarn.lock
+web/frontend/pnpm-lock.yaml
+
+## Python - зависимости
+python/**/__pycache__/
+python/**/*.egg-info/
+python/build/
+python/dist/
+python/**/.eggs/
+python/**/.tox/
+python/**/.nox/
+python/**/.pytest_cache/
+python/**/.mypy_cache/
+python/**/.ruff_cache/
+python/**/.venv/
+python/**/venv/
+python/**/env/
+
+## Docker - локальные данные
+**/docker/data/
+**/docker/postgres_data/
+**/docker/volumes/
+**/docker/*.pid
+
+## SSL сертификаты (НЕ хранить в git!)
+**/*.pem
+**/*.key
+**/*.crt
+**/*.cert
+!shared_resources/certificates/*.example  # Исключение: примеры
+!**/*.example.pem
+!**/*.example.key
+
+## Секреты и конфиденциальные данные
+**/*secret*
+**/*credential*
+**/*password*
+**/service-account*.json
+**/oauth*.json
+**/client_secret*.json
+**/.netrc
+**/.aws/
+**/.gcp/
+**/.azure/
+
+## Архивы и временные файлы
+*.zip
+*.tar
+*.gz
+*.bz2
+*.rar
+*.7z
+*.tmp
+*.temp
+*.swp
+*.swo
+
+## Отчеты о покрытии и тестах
+**/coverage/
+**/htmlcov/
+**/junit.xml
+**/test-reports/
+**/test-results/
+**/allure-results/
+**/allure-report/
+
+## Бэкапы
+*.bak
+*.backup
+*.old
+*.orig

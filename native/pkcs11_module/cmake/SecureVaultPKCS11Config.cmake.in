@@ -1,0 +1,20 @@
+# ============================================================================
+# SecureVault PKCS#11 CMake Config File
+# Для использования: find_package(SecureVaultPKCS11 REQUIRED)
+# ============================================================================
+
+@PACKAGE_INIT@
+
+set_and_check(PKCS11_INCLUDE_DIR "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@/securevault/pkcs11")
+set_and_check(PKCS11_LIBRARY_DIR "@PACKAGE_CMAKE_INSTALL_LIBDIR@")
+
+# Импорт целей
+include("${CMAKE_CURRENT_LIST_DIR}/SecureVaultPKCS11Targets.cmake")
+
+# Функция для удобного подключения
+function(link_securevault_pkcs11 target)
+    target_link_libraries(${target} PRIVATE SecureVault::securevault_pkcs11)
+    target_include_directories(${target} PRIVATE ${PKCS11_INCLUDE_DIR})
+endfunction()
+
+check_required_components(SecureVaultPKCS11)
