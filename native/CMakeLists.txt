@@ -62,6 +62,7 @@ option(SECUREVAULT_USE_VENDORED_OPENSSL "Use vendored OpenSSL" OFF)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Экспорт всех символов на Windows
 if(WIN32)
@@ -292,6 +293,13 @@ list(APPEND SECUREVAULT_NATIVE_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/crypto_module/src/side_channel/constant_time.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/crypto_module/src/side_channel/power_analysis.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/crypto_module/src/side_channel/spectre_mitigation.cpp"
+
+    # Cipher suites (ChaCha20-Poly1305, Kyber1024)
+    "${CMAKE_CURRENT_SOURCE_DIR}/crypto_module/src/cipher_suites/chacha20_poly1305.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/crypto_module/src/cipher_suites/kyber1024.cpp"
+
+    # Main crypto API
+    "${CMAKE_CURRENT_SOURCE_DIR}/crypto_module/src/crypto_api.cpp"
 )
 
 # ГОСТ (опционально)
@@ -745,6 +753,12 @@ if(SECUREVAULT_ENABLE_TESTING)
     )
     add_securevault_test(test_random
         "${CMAKE_CURRENT_SOURCE_DIR}/crypto_module/tests/test_random.cpp"
+    )
+    add_securevault_test(test_chacha20_poly1305
+        "${CMAKE_CURRENT_SOURCE_DIR}/crypto_module/tests/test_chacha20_poly1305.cpp"
+    )
+    add_securevault_test(test_kyber1024
+        "${CMAKE_CURRENT_SOURCE_DIR}/crypto_module/tests/test_kyber1024.cpp"
     )
 
     # Тесты container_module
