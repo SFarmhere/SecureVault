@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
+_TODO_LIST.txt
+
 
 # === C/C++ extensions ===
 *.so
