@@ -82,7 +82,7 @@
 ```
 
 SecureVault/
-├── native/                    # Ядро системы (C++17) — частично реализовано
+├── native/                   # Ядро системы (C++17) — частично реализовано
 │   ├── crypto_module/        #    AES, RSA, Kyber1024, ChaCha20 (базовое)
 │   ├── container_module/     #    Контейнеры v1/v2 (частично)
 │   ├── pkcs11_module/        #    Рутокен, eToken, смарт-карты (в процессе)
