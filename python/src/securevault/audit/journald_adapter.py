@@ -26,7 +26,7 @@ class JournaldAdapter:
     def initialize(self) -> None:
         """Инициализировать подключение к journald."""
         try:
-            import systemd.journal as journal
+            import systemd.journal as journal  # type: ignore
             self._client = journal
             self._initialized = True
             logger.info("Journald adapter initialized")
