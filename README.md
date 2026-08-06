@@ -2,7 +2,7 @@
 
 **Многоуровневая система криптографической защиты файлов с аппаратной поддержкой ключей (HSM / USB Token)**
 
-> **Статус проекта:** Активно разрабатывается. Реализованы Native C++ модули (частично) и Python Core (key_manager, encryption_service, container_manager, policy_manager, exceptions, constants). Web-интерфейс в стадии проектирования.
+> **Статус проекта:** Активно разрабатывается. Реализованы Native C++ модули (частично) и Python Core (key_manager, encryption_service, container_manager, policy_manager, audit_manager, session_manager, anti_debug, native/crypto). Полная аудит-инфраструктура с ECDSA подписью, hash chain, forensic логированием и бэкендами хранения (SQLite, PostgreSQL, Elasticsearch, Splunk, Journald). Web-интерфейс в стадии проектирования.
 
 ## 📖 О проекте
 
@@ -10,7 +10,7 @@
 
 **Уникальность:** Приватный ключ никогда не покидает токен. Все операции с ключом выполняются на аппаратном уровне.
 
-> **Важно:** Реализована базовая структура и часть Native-модулей. Python Core реализован для модулей 1-го и 2-го приоритета. Полная функциональность будет добавлена в следующих версиях.
+> **Важно:** Реализована базовая структура и часть Native-модулей. Python Core реализован для модулей 1-го и 2-го приоритета (key_manager, encryption_service, container_manager, policy_manager, audit_manager, session_manager, anti_debug). Полная аудит-инфраструктура (ECDSA подпись записей, hash chain целостности, forensic логирование, хранение в SQLite/PostgreSQL/Elasticsearch/Splunk/Journald). Полная функциональность будет добавлена в следующих версиях.
 
 ---
 
