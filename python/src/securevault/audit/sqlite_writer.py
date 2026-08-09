@@ -16,8 +16,8 @@ import json
 import logging
 import sqlite3
 import threading
-from typing import Optional, List, Dict, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,8 @@ class SQLiteWriter:
         self._init_schema()
 
     def _init_schema(self) -> None:
-        self._conn.execute("""
+        self._conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS audit_entries (
                 entry_id TEXT PRIMARY KEY,
                 timestamp TEXT NOT NULL,
@@ -58,7 +59,8 @@ class SQLiteWriter:
                 correlation_id TEXT,
                 metadata TEXT
             )
-        """)
+        """
+        )
         self._conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_user ON audit_entries(user_id)"
         )

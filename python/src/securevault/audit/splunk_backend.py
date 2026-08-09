@@ -5,7 +5,7 @@
 
 import json
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -66,8 +66,7 @@ class SplunkBackend:
         }
 
         try:
-            resp = self._requests.post(
-                url, headers=headers, data=json.dumps(payload))
+            resp = self._requests.post(url, headers=headers, data=json.dumps(payload))
             resp.raise_for_status()
         except Exception as e:
             raise SplunkBackendError(f"Splunk write failed: {e}")

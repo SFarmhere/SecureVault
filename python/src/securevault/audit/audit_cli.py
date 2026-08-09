@@ -9,7 +9,7 @@
 
 import json
 import logging
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 from securevault.core.audit_manager import AuditManager
 

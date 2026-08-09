@@ -40,21 +40,21 @@ SecureVault - Менеджер ключей
     km.destroy_key("master-key-1")
 """
 
-import os
-import secrets
 import hashlib
 import hmac
 import logging
-from typing import Optional, List, Tuple, Dict, Any
+import os
+import secrets
 from datetime import datetime, timedelta
-from pathlib import Path
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+from securevault import exceptions
 
 # Внутренние импорты
-from securevault.native import pkcs11
-from securevault.native import crypto
+from securevault.native import crypto, pkcs11
 from securevault.security import shamir
-from securevault import exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -603,8 +603,7 @@ class KeyManager:
 
         # Проверка срока действия
         if metadata.expires_at and datetime.utcnow() > metadata.expires_at:
-            raise KeyExpiredError(
-                f"Key {key_id} expired at {metadata.expires_at}")
+            raise KeyExpiredError(f"Key {key_id} expired at {metadata.expires_at}")
 
         try:
             # Получение из хранилища
@@ -768,8 +767,7 @@ class KeyManager:
 
         try:
             sss = shamir.ShamirSecretSharing()
-            shares = sss.split(
-                master_key, total=total_shares, threshold=threshold)
+            shares = sss.split(master_key, total=total_shares, threshold=threshold)
 
             # Сериализация
             serialized = [s.serialize() for s in shares]
@@ -828,8 +826,7 @@ class KeyManager:
                 if len(recovered) not in (16, 24, 32):
                     raise KeyManagerError("Recovered key has invalid length")
 
-            logger.info(
-                f"Master key restored from backup ({len(shares)} shares)")
+            logger.info(f"Master key restored from backup ({len(shares)} shares)")
             return recovered
 
         except Exception as e:
@@ -1147,8 +1144,7 @@ class KeyManager:
         try:
             import json
 
-            data = {key_id: meta.to_dict()
-                    for key_id, meta in self.metadata.items()}
+            data = {key_id: meta.to_dict() for key_id, meta in self.metadata.items()}
             with open(self.metadata_file, "w") as f:
                 json.dump(data, f, indent=2)
             logger.debug("Metadata saved")

@@ -137,8 +137,7 @@ class LocalStorage:
                 os.fsync(f.fileno())
 
     def disk_usage(self) -> Dict[str, int]:
-        total = sum(f.stat().st_size for f in self.base_dir.rglob(
-            "*") if f.is_file())
+        total = sum(f.stat().st_size for f in self.base_dir.rglob("*") if f.is_file())
         return {"total_bytes": total, "file_count": len(self.list_files())}
 
 

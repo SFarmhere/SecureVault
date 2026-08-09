@@ -47,23 +47,23 @@ SecureVault - Менеджер контейнеров
     cm.unmount_container(container.id)
 """
 
-import os
-import json
 import hashlib
+import json
 import logging
+import os
 import shutil
-from typing import Optional, List, Dict, Any, Tuple
-from pathlib import Path
-from datetime import datetime
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+from securevault import exceptions
 
 # Внутренние импорты
-from securevault.core import key_manager
-from securevault.core import encryption_service
+from securevault.core import encryption_service, key_manager
 from securevault.native import container as native_container
 from securevault.storage import deduplication_chunking
-from securevault import exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -382,8 +382,7 @@ class ContainerManager:
             else False
         )
 
-        logger.info(
-            f"ContainerManager initialized: storage={self.storage_dir}")
+        logger.info(f"ContainerManager initialized: storage={self.storage_dir}")
 
     # ------------------------------------------------------------------------
     # ЖИЗНЕННЫЙ ЦИКЛ КОНТЕЙНЕРА
@@ -651,8 +650,7 @@ class ContainerManager:
 
         # Проверка статуса
         if metadata.status != ContainerStatus.MOUNTED:
-            raise ContainerNotMountedError(
-                f"Container {container_id} is not mounted")
+            raise ContainerNotMountedError(f"Container {container_id} is not mounted")
 
         if metadata.status == ContainerStatus.SEALED:
             raise ContainerSealedError(f"Container {container_id} is sealed")
@@ -737,8 +735,7 @@ class ContainerManager:
 
             # Пересчет коэффициента дедупликации
             if metadata.deduplication_enabled and metadata.file_count > 0:
-                total_original = sum(
-                    f.size for f in self.files[container_id].values())
+                total_original = sum(f.size for f in self.files[container_id].values())
                 total_encrypted = sum(
                     f.encrypted_size for f in self.files[container_id].values()
                 )
@@ -901,8 +898,7 @@ class ContainerManager:
 
             self._save_metadata()
 
-            logger.info(
-                f"File deleted from container {container_id}: {filename}")
+            logger.info(f"File deleted from container {container_id}: {filename}")
 
         except Exception as e:
             logger.error(
@@ -1073,8 +1069,7 @@ class ContainerManager:
             chunk_hash = hashlib.sha256(chunk).hexdigest()
 
             # Проверка существования чанка
-            chunk_path = self._get_container_path(
-                container_id) / "chunks" / chunk_hash
+            chunk_path = self._get_container_path(container_id) / "chunks" / chunk_hash
 
             if chunk_path.exists():
                 # Чанк уже существует - дедупликация

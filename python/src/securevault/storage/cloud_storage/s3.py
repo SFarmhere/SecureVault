@@ -159,7 +159,7 @@ class S3Client:
                 key = obj["Key"]
                 # Убираем префикс bucket из ключа
                 if key.startswith(f"{self.bucket}/"):
-                    key = key[len(f"{self.bucket}/"):]
+                    key = key[len(f"{self.bucket}/") :]
                 paths.append(key)
         return paths
 

@@ -15,7 +15,7 @@ SecureVault - PostgreSQL бэкенд для аудит-записей
 
 import json
 import logging
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,8 @@ class PostgresBackend:
     def _init_schema(self) -> None:
         """Создать таблицу если не существует."""
         with self._conn.cursor() as cur:
-            cur.execute(f"""
+            cur.execute(
+                f"""
                 CREATE TABLE IF NOT EXISTS {self.table} (
                     entry_id TEXT PRIMARY KEY,
                     timestamp TIMESTAMPTZ NOT NULL,
@@ -93,7 +94,8 @@ class PostgresBackend:
                     correlation_id TEXT,
                     metadata JSONB
                 )
-            """)
+            """
+            )
             cur.execute(
                 f"CREATE INDEX IF NOT EXISTS idx_{self.table}_action "
                 f"ON {self.table}(action)"

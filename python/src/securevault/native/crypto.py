@@ -29,17 +29,17 @@ SecureVault - Криптографический модуль (Python оберт
         encrypted = crypto.encrypt_aes_gcm(data, key)
 """
 
-import os
-import hmac
 import hashlib
+import hmac
 import logging
+import os
 import secrets
 from typing import Optional, Tuple
 
+from securevault import constants, exceptions
+
 # Внутренние импорты
 from securevault.native import get_native_manager
-from securevault import exceptions
-from securevault import constants
 
 logger = logging.getLogger(__name__)
 
@@ -179,11 +179,9 @@ def encrypt_aes_gcm(
             nm = get_native_manager()
             return nm.crypto.encrypt_aes_gcm(plaintext, key, associated_data)
         except NotImplementedError:
-            logger.debug(
-                "Native AES-GCM not implemented, using Python fallback")
+            logger.debug("Native AES-GCM not implemented, using Python fallback")
         except Exception as e:
-            logger.warning(
-                f"Native AES-GCM failed: {e}, using Python fallback")
+            logger.warning(f"Native AES-GCM failed: {e}, using Python fallback")
 
     # Python fallback
     return _encrypt_aes_gcm_python(plaintext, key, associated_data)
@@ -224,11 +222,9 @@ def decrypt_aes_gcm(
             nm = get_native_manager()
             return nm.crypto.decrypt_aes_gcm(ciphertext, key, associated_data)
         except NotImplementedError:
-            logger.debug(
-                "Native AES-GCM not implemented, using Python fallback")
+            logger.debug("Native AES-GCM not implemented, using Python fallback")
         except Exception as e:
-            logger.warning(
-                f"Native AES-GCM decrypt failed: {e}, using Python fallback")
+            logger.warning(f"Native AES-GCM decrypt failed: {e}, using Python fallback")
 
     # Python fallback
     return _decrypt_aes_gcm_python(ciphertext, key, associated_data)
@@ -275,8 +271,8 @@ def _decrypt_aes_gcm_python(
         )
 
     try:
-        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
         from cryptography.exceptions import InvalidTag
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
         aesgcm = AESGCM(key)
         nonce = ciphertext[:AES_GCM_NONCE_SIZE]
@@ -285,8 +281,7 @@ def _decrypt_aes_gcm_python(
         try:
             return aesgcm.decrypt(nonce, encrypted, associated_data)
         except InvalidTag:
-            raise AuthenticationError(
-                "AES-GCM authentication failed (invalid tag)")
+            raise AuthenticationError("AES-GCM authentication failed (invalid tag)")
 
     except ImportError:
         raise CryptoNotAvailableError("cryptography library not installed")
@@ -427,8 +422,8 @@ def generate_ecdsa_keypair(curve: str = "p256") -> Tuple[bytes, bytes]:
         raise CryptoNotAvailableError("ECDSA requires 'cryptography' package")
 
     try:
-        from cryptography.hazmat.primitives.asymmetric import ec
         from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import ec
 
         if curve == "p256":
             private_key = ec.generate_private_key(ec.SECP256R1())
@@ -474,11 +469,10 @@ def sign_ecdsa(data: bytes, private_key_pem: bytes) -> bytes:
         raise CryptoNotAvailableError("ECDSA requires 'cryptography' package")
 
     try:
-        from cryptography.hazmat.primitives.asymmetric import ec
         from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import ec
 
-        private_key = serialization.load_pem_private_key(
-            private_key_pem, password=None)
+        private_key = serialization.load_pem_private_key(private_key_pem, password=None)
 
         signature = private_key.sign(data, ec.ECDSA(hashes.SHA256()))
         return signature
@@ -508,9 +502,9 @@ def verify_ecdsa(data: bytes, signature: bytes, public_key_pem: bytes) -> bool:
         raise CryptoNotAvailableError("ECDSA requires 'cryptography' package")
 
     try:
-        from cryptography.hazmat.primitives.asymmetric import ec
-        from cryptography.hazmat.primitives import hashes, serialization
         from cryptography.exceptions import InvalidSignature
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import ec
 
         public_key = serialization.load_pem_public_key(public_key_pem)
 

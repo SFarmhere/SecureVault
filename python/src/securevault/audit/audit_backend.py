@@ -20,8 +20,8 @@ import json
 import logging
 import sqlite3
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -88,12 +88,11 @@ class MemoryBackend(AuditBackend):
             for key, value in filters.items():
                 result = [e for e in result if e.get(key) == value]
         result.sort(key=lambda e: e.get("timestamp", ""), reverse=True)
-        return result[offset: offset + limit]
+        return result[offset : offset + limit]
 
     def delete(self, entry_id: str) -> bool:
         before = len(self._entries)
-        self._entries = [e for e in self._entries if e.get(
-            "entry_id") != entry_id]
+        self._entries = [e for e in self._entries if e.get("entry_id") != entry_id]
         return len(self._entries) < before
 
     def count(self, filters: Optional[Dict[str, Any]] = None) -> int:
@@ -113,7 +112,8 @@ class SQLiteBackend(AuditBackend):
         self._init_schema()
 
     def _init_schema(self) -> None:
-        self._conn.execute("""
+        self._conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS audit_entries (
                 entry_id TEXT PRIMARY KEY,
                 timestamp TEXT NOT NULL,
@@ -134,7 +134,8 @@ class SQLiteBackend(AuditBackend):
                 correlation_id TEXT,
                 metadata TEXT
             )
-        """)
+        """
+        )
         self._conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_entries(user_id)"
         )
@@ -291,7 +292,7 @@ class FileBackend(AuditBackend):
                     entries = [e for e in entries if e.get(key) == value]
 
             entries.sort(key=lambda e: e.get("timestamp", ""), reverse=True)
-            return entries[offset: offset + limit]
+            return entries[offset : offset + limit]
 
         except Exception as e:
             raise AuditBackendError(f"File read failed: {e}")
@@ -313,8 +314,7 @@ class FileBackend(AuditBackend):
             if len(entries) < before:
                 with open(self.file_path, "w", encoding="utf-8") as f:
                     for e in entries:
-                        f.write(json.dumps(
-                            e, ensure_ascii=False, default=str) + "\n")
+                        f.write(json.dumps(e, ensure_ascii=False, default=str) + "\n")
                 return True
             return False
 

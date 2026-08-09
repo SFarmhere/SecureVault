@@ -4,10 +4,10 @@
 """
 
 import logging
-from typing import Optional, List
+from typing import List, Optional
 
-from securevault.db.session import DatabaseSession, get_session
 from securevault.db.models import AuditRecord
+from securevault.db.session import DatabaseSession, get_session
 
 logger = logging.getLogger(__name__)
 

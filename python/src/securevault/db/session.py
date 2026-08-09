@@ -5,8 +5,8 @@
 
 import logging
 import sqlite3
-from typing import Optional, Any
 from pathlib import Path
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 

@@ -31,13 +31,13 @@ SecureVault - Нативные модули
         encrypted = crypto.encrypt_aes_gcm(data, key)
 """
 
+import ctypes
+import logging
 import os
 import sys
-import logging
-import ctypes
-from typing import Optional, Dict, List
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -201,8 +201,7 @@ class LibraryLoader:
             return lib
 
         except OSError as e:
-            raise LibraryLoadError(
-                f"Failed to load {lib_name} from {lib_path}: {e}")
+            raise LibraryLoadError(f"Failed to load {lib_name} from {lib_path}: {e}")
 
     def unload_library(self, lib_name: str) -> None:
         """Выгрузить библиотеку."""

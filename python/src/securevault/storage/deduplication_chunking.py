@@ -108,8 +108,7 @@ class CdcChunker:
             # Скользящий хеш: добавляем новый байт, вычитаем старый
             hash_val = (
                 (hash_val << 1)
-                + (self.GEAR_TABLE[data[i]] ^
-                   self.GEAR_TABLE[data[i - window_size]])
+                + (self.GEAR_TABLE[data[i]] ^ self.GEAR_TABLE[data[i - window_size]])
             ) & 0xFFFFFFFF
 
             # Граница: если перешли минимальный размер и хеш попал в маску
@@ -168,8 +167,7 @@ class ManifestStore:
             hashes = []
             for chunk in chunks:
                 hashes.append(chunk.hash_val)
-                self._blocks[chunk.hash_val] = self._blocks.get(
-                    chunk.hash_val, 0) + 1
+                self._blocks[chunk.hash_val] = self._blocks.get(chunk.hash_val, 0) + 1
             # Старый файл с тем же id заменяем
             old = self._files.pop(file_id, [])
             for h in old:

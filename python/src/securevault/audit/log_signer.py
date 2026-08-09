@@ -14,7 +14,7 @@ SecureVault - Подпись аудит-записей
 
 import json
 import logging
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from securevault.native import crypto
 

@@ -39,24 +39,23 @@ SecureVault - Сервис шифрования/дешифрования
     service.encrypt_stream("large_file.iso", "large_file.enc", chunk_size=65536)
 """
 
-import os
 import hashlib
 import hmac
 import logging
+import os
 import struct
-from typing import Optional, Dict, Any, Tuple
-from pathlib import Path
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
+
+from securevault import exceptions
 
 # Внутренние импорты
 from securevault.core import key_manager
 from securevault.native import crypto
-from securevault.protection_levels import (
-    ProtectionLevelFactory,
-    ProtectionLevel as PLEnum,
-)
-from securevault import exceptions
+from securevault.protection_levels import ProtectionLevel as PLEnum
+from securevault.protection_levels import ProtectionLevelFactory
 
 logger = logging.getLogger(__name__)
 
@@ -161,8 +160,7 @@ class EncryptedFileMetadata:
             algorithm=EncryptionAlgorithm(data["algorithm"]),
             key_id=data["key_id"],
             integrity_hash=bytes.fromhex(data["integrity_hash"]),
-            integrity_algorithm=IntegrityAlgorithm(
-                data["integrity_algorithm"]),
+            integrity_algorithm=IntegrityAlgorithm(data["integrity_algorithm"]),
             created_at=data["created_at"],
             file_id=data["file_id"],
             container_id=data.get("container_id"),
@@ -199,8 +197,7 @@ class EncryptedFileMetadata:
 
         # Сериализуем метаданные в JSON для простоты
         meta_dict = self.to_dict()
-        meta_json = json.dumps(
-            meta_dict, separators=(",", ":")).encode("utf-8")
+        meta_json = json.dumps(meta_dict, separators=(",", ":")).encode("utf-8")
 
         return meta_json
 
@@ -386,8 +383,7 @@ class EncryptionService:
                 # Генерируем ключ контейнера
                 container_key = self.key_mgr.generate_file_key()
                 container_key_id = f"container-{key_id}"
-                self.key_mgr.store_key_securely(
-                    container_key, container_key_id)
+                self.key_mgr.store_key_securely(container_key, container_key_id)
 
                 # 3. Шифруем данные ключом контейнера
                 encrypted_data = self._encrypt_data_internal(
@@ -421,17 +417,14 @@ class EncryptionService:
                 key_id=encryption_key_id,
                 integrity_hash=self._compute_integrity(encrypted_data),
                 integrity_algorithm=self.default_integrity,
-                created_at=__import__(
-                    "datetime").datetime.utcnow().isoformat(),
-                file_id=hashlib.sha256(
-                    input_file.name.encode()).hexdigest()[:16],
+                created_at=__import__("datetime").datetime.utcnow().isoformat(),
+                file_id=hashlib.sha256(input_file.name.encode()).hexdigest()[:16],
                 compression_used=compression_used,
                 deduplication_used=deduplication_used,
             )
 
             # Запись зашифрованного файла
-            self._write_encrypted_file(
-                output_file, encrypted_data, file_metadata)
+            self._write_encrypted_file(output_file, encrypted_data, file_metadata)
 
             logger.info(
                 f"File encrypted: {input_path} -> {output_path} "
@@ -595,8 +588,7 @@ class EncryptionService:
                         break
 
                     # Шифрование чанка
-                    encrypted_chunk, _ = protection.encrypt(
-                        chunk_data, file_key)
+                    encrypted_chunk, _ = protection.encrypt(chunk_data, file_key)
                     encrypted_chunks.append(encrypted_chunk)
                     total_size += len(encrypted_data)
 
@@ -612,18 +604,14 @@ class EncryptionService:
                 key_id=key_id,
                 integrity_hash=self._compute_integrity(encrypted_data),
                 integrity_algorithm=self.default_integrity,
-                created_at=__import__(
-                    "datetime").datetime.utcnow().isoformat(),
-                file_id=hashlib.sha256(
-                    input_file.name.encode()).hexdigest()[:16],
+                created_at=__import__("datetime").datetime.utcnow().isoformat(),
+                file_id=hashlib.sha256(input_file.name.encode()).hexdigest()[:16],
             )
 
             # Запись
-            self._write_encrypted_file(
-                Path(output_path), encrypted_data, metadata)
+            self._write_encrypted_file(Path(output_path), encrypted_data, metadata)
 
-            logger.info(
-                f"Stream encryption complete: {input_path} -> {output_path}")
+            logger.info(f"Stream encryption complete: {input_path} -> {output_path}")
             return metadata
 
         except Exception as e:
@@ -687,8 +675,7 @@ class EncryptionService:
             if self._native_available and algo == EncryptionAlgorithm.AES_256_GCM:
                 encrypted = crypto.encrypt_aes_gcm(data, key, associated_data)
             else:
-                encrypted = self._encrypt_python(
-                    data, key, algo, associated_data)
+                encrypted = self._encrypt_python(data, key, algo, associated_data)
 
             logger.debug(f"Data encrypted: {len(data)} bytes")
             return encrypted
@@ -724,8 +711,7 @@ class EncryptionService:
         try:
             # Использование нативного модуля или fallback
             if self._native_available and algo == EncryptionAlgorithm.AES_256_GCM:
-                decrypted = crypto.decrypt_aes_gcm(
-                    encrypted_data, key, associated_data)
+                decrypted = crypto.decrypt_aes_gcm(encrypted_data, key, associated_data)
             else:
                 decrypted = self._decrypt_python(
                     encrypted_data, key, algo, associated_data
@@ -849,8 +835,7 @@ class EncryptionService:
             # Версия
             version = struct.unpack("B", f.read(1))[0]
             if version != HEADER_VERSION:
-                raise InvalidEncryptedFileError(
-                    f"Unsupported version: {version}")
+                raise InvalidEncryptedFileError(f"Unsupported version: {version}")
 
             # Длина метаданных
             meta_len = struct.unpack(">I", f.read(4))[0]
