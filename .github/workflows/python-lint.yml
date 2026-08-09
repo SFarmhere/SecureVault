@@ -13,6 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}   # 👈 Этой строки не хватало
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -31,6 +32,6 @@ jobs:
         run: |
           flake8 python/src --count --show-source --statistics
 
-      - name: Type check with mypy (ignore missing imports)
+      - name: Type check with mypy
         run: |
           mypy python/src --ignore-missing-imports
