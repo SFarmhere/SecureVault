@@ -4,7 +4,6 @@
 аудит-записей в масштабе.
 """
 
-import json
 import logging
 from typing import Optional, List, Dict, Any
 
@@ -13,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 class ElasticBackendError(Exception):
     """Ошибка Elasticsearch бэкенда."""
-    pass
 
 
 class ElasticBackend:
@@ -37,11 +35,14 @@ class ElasticBackend:
         """Инициализировать подключение к Elasticsearch."""
         try:
             from elasticsearch import Elasticsearch
+
             self._client = Elasticsearch(
                 [{"host": self.host, "port": self.port, "scheme": self.scheme}]
             )
             self._initialized = True
-            logger.info(f"Elasticsearch backend initialized: {self.host}:{self.port}/{self.index}")
+            logger.info(
+                f"Elasticsearch backend initialized: {self.host}:{self.port}/{self.index}"
+            )
         except ImportError:
             raise ElasticBackendError(
                 "elasticsearch not installed. Install with: pip install elasticsearch"

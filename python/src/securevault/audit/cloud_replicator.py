@@ -6,14 +6,13 @@
 
 import json
 import logging
-from typing import Optional, List, Dict, Any
+from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
 
 class CloudReplicatorError(Exception):
     """Ошибка облачной репликации."""
-    pass
 
 
 class CloudReplicator:
@@ -30,6 +29,7 @@ class CloudReplicator:
         try:
             if self.provider == "s3":
                 import boto3
+
                 self._client = boto3.client(
                     "s3",
                     aws_access_key_id=self.config.get("access_key"),
@@ -38,12 +38,15 @@ class CloudReplicator:
                 )
             elif self.provider == "gcs":
                 from google.cloud import storage
+
                 self._client = storage.Client()
             elif self.provider == "dropbox":
                 import dropbox
+
                 self._client = dropbox.Dropbox(self.config.get("token"))
             else:
-                raise CloudReplicatorError(f"Unsupported provider: {self.provider}")
+                raise CloudReplicatorError(
+                    f"Unsupported provider: {self.provider}")
             self._initialized = True
             logger.info(f"Cloud replicator initialized: {self.provider}")
         except ImportError as e:
@@ -65,7 +68,8 @@ class CloudReplicator:
         elif self.provider == "dropbox":
             self._client.files_upload(data, f"/{bucket}/{key}")
         else:
-            raise CloudReplicatorError(f"Unsupported provider: {self.provider}")
+            raise CloudReplicatorError(
+                f"Unsupported provider: {self.provider}")
 
     def replicate(self, bucket: str, prefix: str, entries: List[Dict[str, Any]]) -> int:
         """Реплицировать записи в облако."""
@@ -73,10 +77,12 @@ class CloudReplicator:
         for entry in entries:
             key = f"{prefix}/{entry.get('entry_id', 'unknown')}.json"
             try:
-                self.upload(bucket, key, json.dumps(entry, default=str).encode())
+                self.upload(bucket, key, json.dumps(
+                    entry, default=str).encode())
                 count += 1
             except Exception as e:
-                logger.error(f"Failed to replicate entry {entry.get('entry_id')}: {e}")
+                logger.error(
+                    f"Failed to replicate entry {entry.get('entry_id')}: {e}")
         return count
 
     def close(self) -> None:

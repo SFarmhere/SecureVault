@@ -10,7 +10,6 @@
 import secrets
 import logging
 import threading
-import time
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 from dataclasses import dataclass, field
@@ -23,32 +22,28 @@ logger = logging.getLogger(__name__)
 
 class SessionError(exceptions.SessionError):
     """Ошибка сессии."""
-    pass
 
 
 class SessionNotFoundError(SessionError, exceptions.SessionNotFoundError):
     """Сессия не найдена."""
-    pass
 
 
 class SessionExpiredError(SessionError, exceptions.SessionExpiredError):
     """Сессия истекла."""
-    pass
 
 
 class SessionLockedError(SessionError, exceptions.SessionLockedError):
     """Сессия заблокирована."""
-    pass
 
 
 class TooManySessionsError(SessionError):
     """Слишком много активных сессий."""
-    pass
 
 
 @dataclass
 class Session:
     """Сессия пользователя."""
+
     session_id: str
     user_id: str
     created_at: datetime
@@ -97,7 +92,8 @@ class SessionManager:
     ) -> Session:
         """Создать сессию."""
         with self._lock:
-            user_sessions = [s for s in self._sessions.values() if s.user_id == user_id]
+            user_sessions = [
+                s for s in self._sessions.values() if s.user_id == user_id]
             if len(user_sessions) >= self.max_sessions_per_user:
                 raise TooManySessionsError(
                     f"User {user_id} exceeded max sessions ({self.max_sessions_per_user})"
@@ -136,12 +132,12 @@ class SessionManager:
             if session.locked:
                 raise SessionLockedError(f"Session {session_id} locked")
 
-            idle_time = (datetime.utcnow() - session.last_active).total_seconds()
+            idle_time = (datetime.utcnow() -
+                         session.last_active).total_seconds()
             if idle_time > self.idle_timeout:
                 self.terminate_session(session_id)
                 raise SessionExpiredError(
-                    f"Session {session_id} idle timeout exceeded"
-                )
+                    f"Session {session_id} idle timeout exceeded")
 
             session.touch()
             return session
@@ -198,7 +194,8 @@ class SessionManager:
     def cleanup_expired(self) -> int:
         """Очистить истекшие сессии."""
         with self._lock:
-            expired = [sid for sid, s in self._sessions.items() if s.is_expired()]
+            expired = [sid for sid, s in self._sessions.items()
+                       if s.is_expired()]
             for sid in expired:
                 del self._sessions[sid]
             if expired:

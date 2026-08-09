@@ -4,7 +4,7 @@
 """
 
 import logging
-from typing import Optional, List, Dict, Any
+from typing import Optional, List
 
 from securevault.db.session import DatabaseSession, get_session
 from securevault.db.models import AuditRecord
@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 class AuditRepositoryError(Exception):
     """Ошибка репозитория аудита."""
-    pass
 
 
 class AuditRepository:
@@ -48,16 +47,13 @@ class AuditRepository:
             ")"
         )
         self.session.execute(
-            "CREATE INDEX IF NOT EXISTS idx_audit_action "
-            "ON audit_entries(action)"
+            "CREATE INDEX IF NOT EXISTS idx_audit_action " "ON audit_entries(action)"
         )
         self.session.execute(
-            "CREATE INDEX IF NOT EXISTS idx_audit_user "
-            "ON audit_entries(user_id)"
+            "CREATE INDEX IF NOT EXISTS idx_audit_user " "ON audit_entries(user_id)"
         )
         self.session.execute(
-            "CREATE INDEX IF NOT EXISTS idx_audit_ts "
-            "ON audit_entries(timestamp)"
+            "CREATE INDEX IF NOT EXISTS idx_audit_ts " "ON audit_entries(timestamp)"
         )
 
     def save_record(self, record: AuditRecord) -> None:
@@ -113,9 +109,11 @@ class AuditRepository:
 
         result = []
         for row in rows:
-            row_dict = dict(row) if hasattr(row, "keys") else {
-                col: row[i] for i, col in enumerate(cursor.description)
-            }
+            row_dict = (
+                dict(row)
+                if hasattr(row, "keys")
+                else {col: row[i] for i, col in enumerate(cursor.description)}
+            )
             result.append(AuditRecord.from_db_row(row_dict))
         return result
 
@@ -127,9 +125,11 @@ class AuditRepository:
         row = cursor.fetchone()
         if not row:
             return None
-        row_dict = dict(row) if hasattr(row, "keys") else {
-            col: row[i] for i, col in enumerate(cursor.description)
-        }
+        row_dict = (
+            dict(row)
+            if hasattr(row, "keys")
+            else {col: row[i] for i, col in enumerate(cursor.description)}
+        )
         return AuditRecord.from_db_row(row_dict)
 
     def count(self) -> int:

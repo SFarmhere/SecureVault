@@ -5,14 +5,13 @@
 """
 
 import logging
-from typing import Optional, List, Dict, Any
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
 
 class JournaldAdapterError(Exception):
     """Ошибка Journald адаптера."""
-    pass
 
 
 class JournaldAdapter:
@@ -27,14 +26,14 @@ class JournaldAdapter:
         """Инициализировать подключение к journald."""
         try:
             import systemd.journal as journal  # type: ignore
+
             self._client = journal
             self._initialized = True
             logger.info("Journald adapter initialized")
         except ImportError:
             self._initialized = False
             logger.warning(
-                "systemd not available. Install with: pip install systemd"
-            )
+                "systemd not available. Install with: pip install systemd")
 
     def write(self, entry: Dict[str, Any]) -> None:
         """Записать запись в journald."""

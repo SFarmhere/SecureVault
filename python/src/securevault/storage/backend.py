@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class StorageMetadata:
     """Метаданные файла/контейнера."""
+
     path: str
     size: int = 0
     sha256: str = ""
@@ -38,24 +39,21 @@ class StorageBackend(ABC):
     """Абстрактный базовый класс бэкенда хранения."""
 
     @abstractmethod
-    def store(self, key: str, data: bytes, metadata: Optional[StorageMetadata] = None) -> str:
-        ...
+    def store(
+        self, key: str, data: bytes, metadata: Optional[StorageMetadata] = None
+    ) -> str: ...
 
     @abstractmethod
-    def retrieve(self, key: str) -> Optional[bytes]:
-        ...
+    def retrieve(self, key: str) -> Optional[bytes]: ...
 
     @abstractmethod
-    def delete(self, key: str) -> bool:
-        ...
+    def delete(self, key: str) -> bool: ...
 
     @abstractmethod
-    def exists(self, key: str) -> bool:
-        ...
+    def exists(self, key: str) -> bool: ...
 
     @abstractmethod
-    def list_keys(self) -> List[str]:
-        ...
+    def list_keys(self) -> List[str]: ...
 
 
 class LocalStorageBackend(StorageBackend):
@@ -70,7 +68,9 @@ class LocalStorageBackend(StorageBackend):
         safe = hashlib.sha256(key.encode()).hexdigest()
         return self.base_dir / safe[:2] / safe[2:]
 
-    def store(self, key: str, data: bytes, metadata: Optional[StorageMetadata] = None) -> str:
+    def store(
+        self, key: str, data: bytes, metadata: Optional[StorageMetadata] = None
+    ) -> str:
         with self._lock:
             path = self._key_path(key)
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -101,8 +101,11 @@ class LocalStorageBackend(StorageBackend):
 
     def list_keys(self) -> List[str]:
         with self._lock:
-            return [p.stem for p in self.base_dir.rglob("*")
-                    if p.is_file() and p.suffix != ".meta"]
+            return [
+                p.stem
+                for p in self.base_dir.rglob("*")
+                if p.is_file() and p.suffix != ".meta"
+            ]
 
 
 class DeduplicatingStorageBackend(StorageBackend):
@@ -116,7 +119,9 @@ class DeduplicatingStorageBackend(StorageBackend):
         self._chunker = CdcChunker()
         self._lock = threading.RLock()
 
-    def store(self, key: str, data: bytes, metadata: Optional[StorageMetadata] = None) -> str:
+    def store(
+        self, key: str, data: bytes, metadata: Optional[StorageMetadata] = None
+    ) -> str:
         with self._lock:
             chunks = self._chunker.chunk(data)
             for chunk in chunks:
@@ -175,34 +180,45 @@ class DeduplicatingStorageBackend(StorageBackend):
 class StorageBackendManager:
     """Менеджер бэкендов хранения (локальный + облачный + БД)."""
 
-    def __init__(self, local_dir: str, db_session=None,
-                 cloud_backend: Optional[StorageBackend] = None):
+    def __init__(
+        self,
+        local_dir: str,
+        db_session=None,
+        cloud_backend: Optional[StorageBackend] = None,
+    ):
         self.local = LocalStorageBackend(local_dir)
         self.dedup = DeduplicatingStorageBackend(
-            str(Path(local_dir) / "dedup"), cache=get_cache())
+            str(Path(local_dir) / "dedup"), cache=get_cache()
+        )
         self.cloud = cloud_backend
         self.db = DatabaseStorage(db_session) if db_session else None
         self._lock = threading.RLock()
 
-    def store_file(self, file_id: str, data: bytes,
-                   metadata: Optional[StorageMetadata] = None,
-                   use_dedup: bool = True) -> str:
+    def store_file(
+        self,
+        file_id: str,
+        data: bytes,
+        metadata: Optional[StorageMetadata] = None,
+        use_dedup: bool = True,
+    ) -> str:
         backend = self.dedup if use_dedup else self.local
         backend.store(file_id, data, metadata)
         if self.db and metadata:
-            self.db.create_container({
-                "container_id": file_id,
-                "owner_id": metadata.extra.get("owner_id", ""),
-                "name": metadata.path,
-                "path": str(metadata.path),
-                "total_size": metadata.size,
-                "used_size": metadata.size,
-                "file_count": 1,
-                "security_level": metadata.security_level,
-                "compression": metadata.compression,
-                "created_at": metadata.created_at,
-                "modified_at": metadata.modified_at,
-            })
+            self.db.create_container(
+                {
+                    "container_id": file_id,
+                    "owner_id": metadata.extra.get("owner_id", ""),
+                    "name": metadata.path,
+                    "path": str(metadata.path),
+                    "total_size": metadata.size,
+                    "used_size": metadata.size,
+                    "file_count": 1,
+                    "security_level": metadata.security_level,
+                    "compression": metadata.compression,
+                    "created_at": metadata.created_at,
+                    "modified_at": metadata.modified_at,
+                }
+            )
         return file_id
 
     def retrieve_file(self, file_id: str, use_dedup: bool = True) -> Optional[bytes]:

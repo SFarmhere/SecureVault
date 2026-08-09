@@ -54,12 +54,11 @@ SecureVault - Менеджер аудита
 
 import os
 import json
-import hmac
 import hashlib
 import logging
 import sqlite3
 import threading
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Optional, List, Dict, Any
 from pathlib import Path
 from datetime import datetime, timedelta
 from dataclasses import dataclass, field
@@ -69,7 +68,6 @@ from enum import Enum
 from securevault.native import crypto
 from securevault.core import policy_manager
 from securevault import exceptions
-from securevault import constants
 
 logger = logging.getLogger(__name__)
 
@@ -78,42 +76,47 @@ logger = logging.getLogger(__name__)
 # КОНСТАНТЫ И КОНФИГУРАЦИЯ
 # ============================================================================
 
+
 class AuditEventType(Enum):
     """Типы аудитных событий."""
-    OPERATION = "operation"           # Операция (шифрование, дешифрование и т.д.)
-    AUTHENTICATION = "authentication" # Аутентификация
-    AUTHORIZATION = "authorization"   # Авторизация
-    KEY_MANAGEMENT = "key_management" # Управление ключами
-    CONTAINER = "container"           # Операции с контейнерами
-    POLICY = "policy"                 # Изменение политик
-    SECURITY = "security"             # Событие безопасности
-    SYSTEM = "system"                 # Системное событие
+
+    OPERATION = "operation"  # Операция (шифрование, дешифрование и т.д.)
+    AUTHENTICATION = "authentication"  # Аутентификация
+    AUTHORIZATION = "authorization"  # Авторизация
+    KEY_MANAGEMENT = "key_management"  # Управление ключами
+    CONTAINER = "container"  # Операции с контейнерами
+    POLICY = "policy"  # Изменение политик
+    SECURITY = "security"  # Событие безопасности
+    SYSTEM = "system"  # Системное событие
 
 
 class AuditSeverity(Enum):
     """Уровни серьезности событий."""
-    DEBUG = "debug"                   # Отладка
-    INFO = "info"                     # Информация
-    WARNING = "warning"               # Предупреждение
-    ERROR = "error"                   # Ошибка
-    CRITICAL = "critical"             # Критическое событие
+
+    DEBUG = "debug"  # Отладка
+    INFO = "info"  # Информация
+    WARNING = "warning"  # Предупреждение
+    ERROR = "error"  # Ошибка
+    CRITICAL = "critical"  # Критическое событие
 
 
 class AuditBackendType(Enum):
     """Типы бэкендов хранения."""
-    SQLITE = "sqlite"                 # Локальное SQLite хранилище
-    POSTGRESQL = "postgresql"         # PostgreSQL хранилище
-    MEMORY = "memory"                 # Только в памяти
-    FILE = "file"                     # Файловое хранилище (JSON Lines)
+
+    SQLITE = "sqlite"  # Локальное SQLite хранилище
+    POSTGRESQL = "postgresql"  # PostgreSQL хранилище
+    MEMORY = "memory"  # Только в памяти
+    FILE = "file"  # Файловое хранилище (JSON Lines)
 
 
 class AuditStatus(Enum):
     """Статусы записей аудита."""
-    PENDING = "pending"               # Ожидает подписи
-    SIGNED = "signed"                 # Подписана
-    VERIFIED = "verified"             # Верифицирована
-    TAMPERED = "tampered"             # Обнаружено вмешательство
-    DELETED = "deleted"               # Помечена на удаление
+
+    PENDING = "pending"  # Ожидает подписи
+    SIGNED = "signed"  # Подписана
+    VERIFIED = "verified"  # Верифицирована
+    TAMPERED = "tampered"  # Обнаружено вмешательство
+    DELETED = "deleted"  # Помечена на удаление
 
 
 # Пути и конфигурация
@@ -132,44 +135,39 @@ DEFAULT_MAX_ENTRIES = 1000000
 # ИСКЛЮЧЕНИЯ
 # ============================================================================
 
+
 class AuditError(exceptions.AuditError):
     """Базовое исключение для AuditManager."""
-    pass
 
 
 class AuditLogError(AuditError, exceptions.AuditLogError):
     """Ошибка записи в журнал аудита."""
-    pass
 
 
 class AuditSignatureError(AuditError, exceptions.AuditSignatureError):
     """Ошибка подписи журнала аудита."""
-    pass
 
 
 class AuditVerificationError(AuditError):
     """Ошибка верификации журнала аудита."""
-    pass
 
 
 class AuditBackendError(AuditError):
     """Ошибка бэкенда хранения."""
-    pass
 
 
 class AuditExportError(AuditError):
     """Ошибка экспорта аудита."""
-    pass
 
 
 class AuditNotFoundError(AuditError):
     """Запись аудита не найдена."""
-    pass
 
 
 # ============================================================================
 # МЕТАДАННЫЕ ЗАПИСИ АУДИТА
 # ============================================================================
+
 
 @dataclass
 class AuditEntry:
@@ -194,7 +192,7 @@ class AuditEntry:
     timestamp: datetime
     user_id: str
     action: str
-    result: str                     # success / failure / denied
+    result: str  # success / failure / denied
 
     # Категории
     event_type: AuditEventType = AuditEventType.OPERATION
@@ -205,9 +203,9 @@ class AuditEntry:
     source: str = ""
 
     # Целостность и подпись
-    prev_hash: Optional[str] = None     # Хеш предыдущей записи
-    entry_hash: Optional[str] = None    # Хеш текущей записи
-    signature: Optional[str] = None     # ECDSA подпись
+    prev_hash: Optional[str] = None  # Хеш предыдущей записи
+    entry_hash: Optional[str] = None  # Хеш текущей записи
+    signature: Optional[str] = None  # ECDSA подпись
     status: AuditStatus = AuditStatus.PENDING
 
     # Мета
@@ -270,6 +268,7 @@ class AuditEntry:
 # ============================================================================
 # ОСНОВНОЙ КЛАСС
 # ============================================================================
+
 
 class AuditManager:
     """
@@ -752,23 +751,19 @@ class AuditManager:
 
             if event_type:
                 result_list = [
-                    e for e in result_list if e.event_type == event_type
-                ]
+                    e for e in result_list if e.event_type == event_type]
 
             if severity:
                 result_list = [
-                    e for e in result_list if e.severity == severity
-                ]
+                    e for e in result_list if e.severity == severity]
 
             if start_time:
                 result_list = [
-                    e for e in result_list if e.timestamp >= start_time
-                ]
+                    e for e in result_list if e.timestamp >= start_time]
 
             if end_time:
                 result_list = [
-                    e for e in result_list if e.timestamp <= end_time
-                ]
+                    e for e in result_list if e.timestamp <= end_time]
 
             if source:
                 result_list = [e for e in result_list if e.source == source]
@@ -777,7 +772,7 @@ class AuditManager:
             result_list.sort(key=lambda e: e.timestamp, reverse=True)
 
             # Пагинация
-            result_list = result_list[offset:offset + limit]
+            result_list = result_list[offset: offset + limit]
 
             return result_list
 
@@ -834,13 +829,11 @@ class AuditManager:
 
             if event_type:
                 result_list = [
-                    e for e in result_list if e.event_type == event_type
-                ]
+                    e for e in result_list if e.event_type == event_type]
 
             if severity:
                 result_list = [
-                    e for e in result_list if e.severity == severity
-                ]
+                    e for e in result_list if e.severity == severity]
 
             return len(result_list)
 
@@ -939,9 +932,7 @@ class AuditManager:
                     f"{len(errors)} errors, {len(tampered)} tampered entries"
                 )
             else:
-                logger.info(
-                    f"Audit integrity verified: {checked} entries OK"
-                )
+                logger.info(f"Audit integrity verified: {checked} entries OK")
 
             return result
 
@@ -991,8 +982,7 @@ class AuditManager:
 
             if format == "json":
                 data = [
-                    e.to_dict(include_signature=include_signatures)
-                    for e in entries
+                    e.to_dict(include_signature=include_signatures) for e in entries
                 ]
                 with open(output, "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=2, ensure_ascii=False)
@@ -1008,8 +998,7 @@ class AuditManager:
                 raise AuditExportError(f"Unsupported format: {format}")
 
             logger.info(
-                f"Audit exported: {len(entries)} entries -> {output_path}"
-            )
+                f"Audit exported: {len(entries)} entries -> {output_path}")
             return len(entries)
 
         except Exception as e:
@@ -1039,7 +1028,8 @@ class AuditManager:
         try:
             input_file = Path(input_path)
             if not input_file.exists():
-                raise AuditNotFoundError(f"Import file not found: {input_path}")
+                raise AuditNotFoundError(
+                    f"Import file not found: {input_path}")
 
             entries_data = []
             if format == "json":
@@ -1080,7 +1070,8 @@ class AuditManager:
                 if self._entries:
                     self._last_hash = self._entries[-1].entry_hash
 
-            logger.info(f"Audit imported: {imported} entries from {input_path}")
+            logger.info(
+                f"Audit imported: {imported} entries from {input_path}")
             return imported
 
         except Exception as e:
@@ -1239,9 +1230,7 @@ class AuditManager:
 
             # Удаление по возрасту
             if cutoff:
-                to_remove = [
-                    e for e in self._entries if e.timestamp < cutoff
-                ]
+                to_remove = [e for e in self._entries if e.timestamp < cutoff]
                 for entry in to_remove:
                     self._remove_entry(entry.entry_id)
                     removed += 1
@@ -1293,12 +1282,14 @@ class AuditManager:
         try:
             if self._signing_key:
                 # Используем предоставленный ключ
-                self._signing_pubkey = self._extract_public_key(self._signing_key)
+                self._signing_pubkey = self._extract_public_key(
+                    self._signing_key)
             elif key_path.exists():
                 # Загружаем существующий ключ
                 with open(key_path, "rb") as f:
                     self._signing_key = f.read()
-                self._signing_pubkey = self._extract_public_key(self._signing_key)
+                self._signing_pubkey = self._extract_public_key(
+                    self._signing_key)
             else:
                 # Генерируем новый ключ
                 private_pem, public_pem = crypto.generate_ecdsa_keypair("p256")
@@ -1374,7 +1365,8 @@ class AuditManager:
             signature = bytes.fromhex(entry.signature)
             return crypto.verify_ecdsa(data, signature, self._signing_pubkey)
         except Exception as e:
-            logger.error(f"Failed to verify signature for {entry.entry_id}: {e}")
+            logger.error(
+                f"Failed to verify signature for {entry.entry_id}: {e}")
             return False
 
     def _get_signing_data(self, entry: AuditEntry) -> bytes:
@@ -1566,7 +1558,8 @@ class AuditManager:
             session_id=data.get("session_id"),
             request_id=data.get("request_id"),
             correlation_id=data.get("correlation_id"),
-            metadata=json.loads(data["metadata"]) if data.get("metadata") else {},
+            metadata=json.loads(data["metadata"]) if data.get(
+                "metadata") else {},
         )
 
     def _enforce_limits(self) -> None:
@@ -1580,9 +1573,7 @@ class AuditManager:
 
         # Ограничение по возрасту
         cutoff = datetime.utcnow() - timedelta(days=self.retention_days)
-        to_remove = [
-            e for e in self._entries if e.timestamp < cutoff
-        ]
+        to_remove = [e for e in self._entries if e.timestamp < cutoff]
         for entry in to_remove:
             self._remove_entry(entry.entry_id)
 
@@ -1590,6 +1581,7 @@ class AuditManager:
 # ============================================================================
 # ФУНКЦИИ ВЫСОКОГО УРОВНЯ
 # ============================================================================
+
 
 def create_audit_manager(
     storage_dir: Optional[str] = None,
@@ -1648,13 +1640,11 @@ __all__ = [
     # Классы
     "AuditManager",
     "AuditEntry",
-
     # Константы
     "AuditEventType",
     "AuditSeverity",
     "AuditBackendType",
     "AuditStatus",
-
     # Исключения
     "AuditError",
     "AuditLogError",
@@ -1663,7 +1653,6 @@ __all__ = [
     "AuditBackendError",
     "AuditExportError",
     "AuditNotFoundError",
-
     # Функции
     "create_audit_manager",
     "quick_log",

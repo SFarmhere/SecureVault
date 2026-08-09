@@ -130,7 +130,8 @@ class AuditRecord:
             session_id=row.get("session_id"),
             request_id=row.get("request_id"),
             correlation_id=row.get("correlation_id"),
-            metadata=json.loads(row["metadata"]) if row.get("metadata") else {},
+            metadata=json.loads(row["metadata"]) if row.get(
+                "metadata") else {},
         )
 
     def to_dict(self) -> Dict[str, Any]:

@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 
 class SQLiteWriterError(Exception):
     """Ошибка SQLite writer."""
-    pass
 
 
 class SQLiteWriter:

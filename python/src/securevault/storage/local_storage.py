@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 class LocalStorageError(Exception):
     """Ошибка локального хранилища."""
-    pass
 
 
 class FileLock:
@@ -28,7 +27,9 @@ class FileLock:
 
     def acquire(self) -> bool:
         try:
-            self._fd = os.open(str(self._lock_file), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            self._fd = os.open(
+                str(self._lock_file), os.O_CREAT | os.O_EXCL | os.O_WRONLY
+            )
             return True
         except FileExistsError:
             return False
@@ -64,8 +65,9 @@ class LocalStorage:
     def _meta_path(self, path: Path) -> Path:
         return path.with_suffix(path.suffix + ".meta")
 
-    def store(self, file_id: str, data: bytes,
-              metadata: Optional[StorageMetadata] = None) -> str:
+    def store(
+        self, file_id: str, data: bytes, metadata: Optional[StorageMetadata] = None
+    ) -> str:
         with self._lock:
             path = self._resolve(file_id)
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -108,8 +110,11 @@ class LocalStorage:
 
     def list_files(self) -> List[str]:
         with self._lock:
-            return [p.stem for p in self.base_dir.rglob("*")
-                    if p.is_file() and p.suffix != ".meta"]
+            return [
+                p.stem
+                for p in self.base_dir.rglob("*")
+                if p.is_file() and p.suffix != ".meta"
+            ]
 
     def verify_integrity(self, file_id: str) -> bool:
         path = self._resolve(file_id)
@@ -132,7 +137,8 @@ class LocalStorage:
                 os.fsync(f.fileno())
 
     def disk_usage(self) -> Dict[str, int]:
-        total = sum(f.stat().st_size for f in self.base_dir.rglob("*") if f.is_file())
+        total = sum(f.stat().st_size for f in self.base_dir.rglob(
+            "*") if f.is_file())
         return {"total_bytes": total, "file_count": len(self.list_files())}
 
 

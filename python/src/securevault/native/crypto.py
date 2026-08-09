@@ -34,7 +34,7 @@ import hmac
 import hashlib
 import logging
 import secrets
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Tuple
 
 # Внутренние импорты
 from securevault.native import get_native_manager
@@ -50,8 +50,8 @@ logger = logging.getLogger(__name__)
 
 # Размеры
 AES_GCM_NONCE_SIZE = constants.AES_GCM_NONCE_SIZE  # 12 байт
-AES_GCM_TAG_SIZE = constants.AES_GCM_TAG_SIZE      # 16 байт
-AES_KEY_SIZE = constants.AES_KEY_SIZE              # 32 байта (AES-256)
+AES_GCM_TAG_SIZE = constants.AES_GCM_TAG_SIZE  # 16 байт
+AES_KEY_SIZE = constants.AES_KEY_SIZE  # 32 байта (AES-256)
 
 # ECDSA
 ECDSA_P256_KEY_SIZE = constants.ECDSA_P256_KEY_SIZE  # 32 байта
@@ -62,35 +62,30 @@ ECDSA_P384_KEY_SIZE = constants.ECDSA_P384_KEY_SIZE  # 48 байт
 # ИСКЛЮЧЕНИЯ
 # ============================================================================
 
+
 class CryptoError(exceptions.NativeError):
     """Базовое исключение для криптографических операций."""
-    pass
 
 
 class CryptoNotAvailableError(CryptoError):
     """Криптографический модуль недоступен."""
-    pass
 
 
 class InvalidKeyError(CryptoError):
     """Невалидный ключ."""
-    pass
 
 
 class InvalidNonceError(CryptoError):
     """Невалидный nonce."""
-    pass
 
 
 class AuthenticationError(CryptoError):
     """Ошибка аутентификации (неверный тег)."""
-    pass
 
 
 # ============================================================================
 # ВНУТРЕННЕЕ СОСТОЯНИЕ
 # ============================================================================
-
 # Кэш доступности нативного модуля
 _native_available: Optional[bool] = None
 
@@ -101,6 +96,7 @@ _python_crypto_available: Optional[bool] = None
 # ============================================================================
 # ПРОВЕРКА ДОСТУПНОСТИ
 # ============================================================================
+
 
 def is_available() -> bool:
     """
@@ -143,6 +139,7 @@ def _is_python_crypto_available() -> bool:
     if _python_crypto_available is None:
         try:
             from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # noqa: F401
+
             _python_crypto_available = True
         except ImportError:
             _python_crypto_available = False
@@ -152,6 +149,7 @@ def _is_python_crypto_available() -> bool:
 # ============================================================================
 # AES-256-GCM ШИФРОВАНИЕ
 # ============================================================================
+
 
 def encrypt_aes_gcm(
     plaintext: bytes,
@@ -181,9 +179,11 @@ def encrypt_aes_gcm(
             nm = get_native_manager()
             return nm.crypto.encrypt_aes_gcm(plaintext, key, associated_data)
         except NotImplementedError:
-            logger.debug("Native AES-GCM not implemented, using Python fallback")
+            logger.debug(
+                "Native AES-GCM not implemented, using Python fallback")
         except Exception as e:
-            logger.warning(f"Native AES-GCM failed: {e}, using Python fallback")
+            logger.warning(
+                f"Native AES-GCM failed: {e}, using Python fallback")
 
     # Python fallback
     return _encrypt_aes_gcm_python(plaintext, key, associated_data)
@@ -224,9 +224,11 @@ def decrypt_aes_gcm(
             nm = get_native_manager()
             return nm.crypto.decrypt_aes_gcm(ciphertext, key, associated_data)
         except NotImplementedError:
-            logger.debug("Native AES-GCM not implemented, using Python fallback")
+            logger.debug(
+                "Native AES-GCM not implemented, using Python fallback")
         except Exception as e:
-            logger.warning(f"Native AES-GCM decrypt failed: {e}, using Python fallback")
+            logger.warning(
+                f"Native AES-GCM decrypt failed: {e}, using Python fallback")
 
     # Python fallback
     return _decrypt_aes_gcm_python(ciphertext, key, associated_data)
@@ -283,7 +285,8 @@ def _decrypt_aes_gcm_python(
         try:
             return aesgcm.decrypt(nonce, encrypted, associated_data)
         except InvalidTag:
-            raise AuthenticationError("AES-GCM authentication failed (invalid tag)")
+            raise AuthenticationError(
+                "AES-GCM authentication failed (invalid tag)")
 
     except ImportError:
         raise CryptoNotAvailableError("cryptography library not installed")
@@ -296,6 +299,7 @@ def _decrypt_aes_gcm_python(
 # ============================================================================
 # ХЕШИРОВАНИЕ
 # ============================================================================
+
 
 def hash_sha256(data: bytes) -> bytes:
     """
@@ -371,6 +375,7 @@ def hmac_sha256(data: bytes, key: bytes) -> bytes:
 # ГЕНЕРАЦИЯ СЛУЧАЙНЫХ ЧИСЕЛ
 # ============================================================================
 
+
 def generate_random(size: int) -> bytes:
     """
     Генерация криптостойких случайных байтов.
@@ -404,6 +409,7 @@ def generate_random(size: int) -> bytes:
 # ECDSA ПОДПИСЬ (ДЛЯ АУДИТА)
 # ============================================================================
 
+
 def generate_ecdsa_keypair(curve: str = "p256") -> Tuple[bytes, bytes]:
     """
     Сгенерировать ECDSA ключевую пару.
@@ -418,9 +424,7 @@ def generate_ecdsa_keypair(curve: str = "p256") -> Tuple[bytes, bytes]:
         CryptoError: Если генерация не удалась.
     """
     if not _is_python_crypto_available():
-        raise CryptoNotAvailableError(
-            "ECDSA requires 'cryptography' package"
-        )
+        raise CryptoNotAvailableError("ECDSA requires 'cryptography' package")
 
     try:
         from cryptography.hazmat.primitives.asymmetric import ec
@@ -467,17 +471,14 @@ def sign_ecdsa(data: bytes, private_key_pem: bytes) -> bytes:
         CryptoError: Если подпись не удалась.
     """
     if not _is_python_crypto_available():
-        raise CryptoNotAvailableError(
-            "ECDSA requires 'cryptography' package"
-        )
+        raise CryptoNotAvailableError("ECDSA requires 'cryptography' package")
 
     try:
         from cryptography.hazmat.primitives.asymmetric import ec
         from cryptography.hazmat.primitives import hashes, serialization
 
         private_key = serialization.load_pem_private_key(
-            private_key_pem, password=None
-        )
+            private_key_pem, password=None)
 
         signature = private_key.sign(data, ec.ECDSA(hashes.SHA256()))
         return signature
@@ -504,9 +505,7 @@ def verify_ecdsa(data: bytes, signature: bytes, public_key_pem: bytes) -> bool:
         CryptoError: Если проверка не удалась.
     """
     if not _is_python_crypto_available():
-        raise CryptoNotAvailableError(
-            "ECDSA requires 'cryptography' package"
-        )
+        raise CryptoNotAvailableError("ECDSA requires 'cryptography' package")
 
     try:
         from cryptography.hazmat.primitives.asymmetric import ec
@@ -530,6 +529,7 @@ def verify_ecdsa(data: bytes, signature: bytes, public_key_pem: bytes) -> bool:
 # ============================================================================
 # УТИЛИТЫ
 # ============================================================================
+
 
 def _validate_key(key: bytes) -> None:
     """Проверить размер ключа."""
@@ -575,28 +575,22 @@ __all__ = [
     # Проверка доступности
     "is_available",
     "is_native_available",
-
     # AES-GCM
     "encrypt_aes_gcm",
     "decrypt_aes_gcm",
-
     # Хеширование
     "hash_sha256",
     "hash_sha512",
     "hmac_sha256",
-
     # Случайные числа
     "generate_random",
-
     # ECDSA
     "generate_ecdsa_keypair",
     "sign_ecdsa",
     "verify_ecdsa",
-
     # Утилиты
     "secure_erase",
     "constant_time_equals",
-
     # Исключения
     "CryptoError",
     "CryptoNotAvailableError",

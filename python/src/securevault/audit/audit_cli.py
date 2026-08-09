@@ -9,16 +9,15 @@
 
 import json
 import logging
-from typing import Optional, List, Dict, Any, Callable
+from typing import Optional, List, Dict, Any
 
-from securevault.core.audit_manager import AuditManager, AuditEntry
+from securevault.core.audit_manager import AuditManager
 
 logger = logging.getLogger(__name__)
 
 
 class AuditCLIError(Exception):
     """Ошибка CLI аудита."""
-    pass
 
 
 class AuditCLI:

@@ -6,9 +6,8 @@
 Зависимости: requests
 """
 
-import io
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +79,8 @@ class YandexDiskClient:
 
         # Получаем URL для загрузки
         resp = self._request(
-            "GET", "/v1/disk/resources/upload",
+            "GET",
+            "/v1/disk/resources/upload",
             params={"path": disk_path, "overwrite": "true"},
         )
         href = resp.json().get("href")
@@ -89,6 +89,7 @@ class YandexDiskClient:
 
         # Загружаем данные
         import requests
+
         requests.put(href, data=data)
         logger.debug(f"Uploaded to Yandex Disk: {disk_path}")
 
@@ -108,7 +109,8 @@ class YandexDiskClient:
 
         # Получаем URL для скачивания
         resp = self._request(
-            "GET", "/v1/disk/resources/download",
+            "GET",
+            "/v1/disk/resources/download",
             params={"path": disk_path},
         )
         href = resp.json().get("href")
@@ -116,6 +118,7 @@ class YandexDiskClient:
             raise FileNotFoundError(f"File not found in Yandex Disk: {path}")
 
         import requests
+
         download_resp = requests.get(href)
         download_resp.raise_for_status()
         return download_resp.content
@@ -132,8 +135,11 @@ class YandexDiskClient:
         disk_path = self._resolve_path(path)
 
         try:
-            self._request("DELETE", "/v1/disk/resources",
-                          params={"path": disk_path, "permanently": "true"})
+            self._request(
+                "DELETE",
+                "/v1/disk/resources",
+                params={"path": disk_path, "permanently": "true"},
+            )
             return True
         except Exception as e:
             if "404" in str(e) or "not found" in str(e).lower():
@@ -172,7 +178,8 @@ class YandexDiskClient:
         paths = []
         try:
             resp = self._request(
-                "GET", "/v1/disk/resources",
+                "GET",
+                "/v1/disk/resources",
                 params={"path": disk_prefix, "limit": 1000, "fields": "items"},
             )
             items = resp.json().get("_embedded", {}).get("items", [])
@@ -180,7 +187,11 @@ class YandexDiskClient:
                 if item.get("type") == "file":
                     full_path = item.get("path", "")
                     # Восстанавливаем относительный путь
-                    rel = full_path[len(disk_prefix):] if full_path.startswith(disk_prefix) else full_path
+                    rel = (
+                        full_path[len(disk_prefix):]
+                        if full_path.startswith(disk_prefix)
+                        else full_path
+                    )
                     paths.append(rel)
         except Exception as e:
             logger.error(f"Failed to list Yandex Disk objects: {e}")
@@ -197,13 +208,15 @@ class YandexDiskClient:
         """
         disk_path = self._resolve_path(path)
 
-        resp = self._request("GET", "/v1/disk/resources",
-                             params={"path": disk_path, "fields": "size"})
+        resp = self._request(
+            "GET", "/v1/disk/resources", params={"path": disk_path, "fields": "size"}
+        )
         data = resp.json()
         return {"size": data.get("size", 0)}
 
-    def upload_stream(self, path: str, file_path: str,
-                      encrypt_fn=None, chunk_size: int = 65536) -> None:
+    def upload_stream(
+        self, path: str, file_path: str, encrypt_fn=None, chunk_size: int = 65536
+    ) -> None:
         """Потоково загрузить файл.
 
         Args:
@@ -216,7 +229,8 @@ class YandexDiskClient:
 
         # Получаем URL для загрузки
         resp = self._request(
-            "GET", "/v1/disk/resources/upload",
+            "GET",
+            "/v1/disk/resources/upload",
             params={"path": disk_path, "overwrite": "true"},
         )
         href = resp.json().get("href")
@@ -224,6 +238,7 @@ class YandexDiskClient:
             raise IOError("Failed to get upload URL from Yandex Disk")
 
         import requests
+
         with open(file_path, "rb") as f:
             if encrypt_fn:
                 # Шифруем кусками и загружаем
@@ -237,8 +252,9 @@ class YandexDiskClient:
             else:
                 requests.put(href, data=f)
 
-    def download_stream(self, path: str, output_path: str,
-                        decrypt_fn=None, chunk_size: int = 65536) -> None:
+    def download_stream(
+        self, path: str, output_path: str, decrypt_fn=None, chunk_size: int = 65536
+    ) -> None:
         """Потоково скачать файл.
 
         Args:
@@ -251,7 +267,8 @@ class YandexDiskClient:
 
         # Получаем URL для скачивания
         resp = self._request(
-            "GET", "/v1/disk/resources/download",
+            "GET",
+            "/v1/disk/resources/download",
             params={"path": disk_path},
         )
         href = resp.json().get("href")
@@ -259,6 +276,7 @@ class YandexDiskClient:
             raise FileNotFoundError(f"File not found in Yandex Disk: {path}")
 
         import requests
+
         download_resp = requests.get(href, stream=True)
         download_resp.raise_for_status()
 
@@ -277,7 +295,6 @@ class YandexDiskClient:
 
     def close(self) -> None:
         """Закрыть соединение."""
-        pass
 
 
 def create_client(credentials: Dict[str, Any], bucket: str) -> YandexDiskClient:

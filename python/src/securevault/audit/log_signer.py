@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 class LogSignerError(Exception):
     """Ошибка подписи аудит-записей."""
-    pass
 
 
 class LogSigner:
@@ -98,6 +97,7 @@ class LogSigner:
         """Извлечь публичный ключ из приватного."""
         try:
             from cryptography.hazmat.primitives import serialization
+
             private_key = serialization.load_pem_private_key(
                 private_key_pem, password=None
             )

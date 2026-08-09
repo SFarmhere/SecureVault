@@ -8,7 +8,7 @@ import hashlib
 import logging
 import threading
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -86,12 +86,14 @@ class BlockCache:
 
     def _evict_if_needed(self) -> None:
         """Вытеснить LRU-записи при превышении лимитов."""
-        while (len(self._cache) > self._max_entries or
-               self._total_bytes > self._max_bytes):
+        while (
+            len(self._cache) > self._max_entries or self._total_bytes > self._max_bytes
+        ):
             if not self._cache:
                 break
             # Найти самую старую запись
-            oldest_hash = min(self._cache, key=lambda h: self._cache[h].last_access)
+            oldest_hash = min(
+                self._cache, key=lambda h: self._cache[h].last_access)
             entry = self._cache.pop(oldest_hash)
             self._total_bytes -= entry.size
 
@@ -143,7 +145,9 @@ class FileChangeNotifier:
         with self._lock:
             self._listeners.setdefault(event_type, []).append(callback)
 
-    def unsubscribe(self, event_type: str, callback: Callable[[FileEvent], None]) -> None:
+    def unsubscribe(
+        self, event_type: str, callback: Callable[[FileEvent], None]
+    ) -> None:
         """Отписаться от события."""
         with self._lock:
             callbacks = self._listeners.get(event_type, [])
@@ -159,7 +163,8 @@ class FileChangeNotifier:
             try:
                 cb(event)
             except Exception as exc:
-                logger.warning("Listener error for %s: %s", event.event_type, exc)
+                logger.warning("Listener error for %s: %s",
+                               event.event_type, exc)
 
     def notify_file_created(self, path: str, size: int = 0) -> None:
         self.notify(FileEvent(path, "created", size))

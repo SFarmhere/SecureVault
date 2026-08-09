@@ -57,6 +57,7 @@ CK_DATE = ctypes.c_byte * 8
 
 class TokenType(IntEnum):
     """Тип аппаратного токена."""
+
     UNKNOWN = 0
     RUTOKEN = 1
     ETOKEN = 2
@@ -70,6 +71,7 @@ class TokenType(IntEnum):
 
 class CKR:
     """Коды возврата PKCS#11."""
+
     OK = 0
     PIN_INCORRECT = 0x000000A0
     PIN_LOCKED = 0x000000A4
@@ -85,6 +87,7 @@ class CKR:
 
 class CKU:
     """Типы пользователей PKCS#11."""
+
     SO = 0  # Security Officer
     USER = 1  # Normal user
     CONTEXT_SPECIFIC = 2
@@ -92,6 +95,7 @@ class CKU:
 
 class CKK:
     """Типы ключей PKCS#11."""
+
     RSA = 0x00000000
     DSA = 0x00000001
     DH = 0x00000002
@@ -102,6 +106,7 @@ class CKK:
 
 class CKO:
     """Классы объектов PKCS#11."""
+
     DATA = 0x00000000
     CERTIFICATE = 0x00000001
     PUBLIC_KEY = 0x00000002
@@ -111,6 +116,7 @@ class CKO:
 
 class CKA:
     """Атрибуты объектов PKCS#11."""
+
     CLASS = 0x00000000
     TOKEN = 0x00000001
     PRIVATE = 0x00000002
@@ -132,6 +138,7 @@ class CKA:
 
 class CKF:
     """Флаги PKCS#11."""
+
     RW_SESSION = 0x00000002
     SERIAL_SESSION = 0x00000004
 
@@ -140,8 +147,10 @@ class CKF:
 # C-СТРУКТУРЫ PKCS#11
 # ============================================================================
 
+
 class CK_TOKEN_INFO(ctypes.Structure):
     """CK_TOKEN_INFO из PKCS#11 spec."""
+
     _fields_ = [
         ("label", ctypes.c_char * 32),
         ("manufacturer_id", ctypes.c_char * 32),
@@ -166,6 +175,7 @@ class CK_TOKEN_INFO(ctypes.Structure):
 
 class CK_ATTRIBUTE(ctypes.Structure):
     """CK_ATTRIBUTE из PKCS#11 spec."""
+
     _fields_ = [
         ("type", CK_ATTRIBUTE_TYPE),
         ("pValue", CK_VOID_PTR),
@@ -175,6 +185,7 @@ class CK_ATTRIBUTE(ctypes.Structure):
 
 class CK_MECHANISM(ctypes.Structure):
     """CK_MECHANISM из PKCS#11 spec."""
+
     _fields_ = [
         ("mechanism", CK_MECHANISM_TYPE),
         ("pParameter", CK_VOID_PTR),
@@ -185,6 +196,7 @@ class CK_MECHANISM(ctypes.Structure):
 # ============================================================================
 # PYTHON-ОБЕРТКИ
 # ============================================================================
+
 
 class TokenInfo:
     """Информация о токене."""
@@ -206,10 +218,23 @@ class TokenInfo:
 
     def __init__(self, c_info: CK_TOKEN_INFO, slot_id: int):
         self.slot_id = slot_id
-        self.label = c_info.label.decode("utf-8", errors="replace").strip("\x00").strip()
-        self.manufacturer_id = c_info.manufacturer_id.decode("utf-8", errors="replace").strip("\x00").strip()
-        self.model = c_info.model.decode("utf-8", errors="replace").strip("\x00").strip()
-        self.serial_number = c_info.serial_number.decode("utf-8", errors="replace").strip("\x00").strip()
+        self.label = (
+            c_info.label.decode(
+                "utf-8", errors="replace").strip("\x00").strip()
+        )
+        self.manufacturer_id = (
+            c_info.manufacturer_id.decode("utf-8", errors="replace")
+            .strip("\x00")
+            .strip()
+        )
+        self.model = (
+            c_info.model.decode(
+                "utf-8", errors="replace").strip("\x00").strip()
+        )
+        self.serial_number = (
+            c_info.serial_number.decode(
+                "utf-8", errors="replace").strip("\x00").strip()
+        )
         self.flags = c_info.flags
         self.max_session_count = c_info.ulMaxSessionCount
         self.session_count = c_info.ulSessionCount
@@ -239,7 +264,9 @@ class TokenInfo:
 class KeyInfo:
     """Информация о ключе на токене."""
 
-    def __init__(self, handle: int, key_id: bytes, label: str, key_type: int, size_bits: int):
+    def __init__(
+        self, handle: int, key_id: bytes, label: str, key_type: int, size_bits: int
+    ):
         self.handle = handle
         self.key_id = key_id.hex() if key_id else ""
         self.label = label
@@ -259,6 +286,7 @@ class KeyInfo:
 # ============================================================================
 # ИСКЛЮЧЕНИЯ
 # ============================================================================
+
 
 class PKCS11Error(Exception):
     """Базовое исключение для ошибок PKCS#11."""
@@ -283,22 +311,20 @@ class PKCS11Error(Exception):
 
 class PinError(PKCS11Error):
     """Ошибка PIN-кода."""
-    pass
 
 
 class SessionError(PKCS11Error):
     """Ошибка сессии."""
-    pass
 
 
 class TokenNotFoundError(PKCS11Error):
     """Токен не найден."""
-    pass
 
 
 # ============================================================================
 # ОСНОВНОЙ КЛАСС
 # ============================================================================
+
 
 class PKCS11Module:
     """
@@ -320,19 +346,19 @@ class PKCS11Module:
     # Стандартные имена PKCS#11 библиотек по платформам
     LIB_NAMES = {
         "linux": [
-            "librtpkcs11ecp.so",      # Рутокен
-            "libasepkcs.so",          # eToken
-            "libjcPKCS11.so",         # JaCarta
-            "libykcs11.so",           # YubiKey
-            "libopensc-pkcs11.so",    # OpenSC
-            "libP11.so",              # Generic
+            "librtpkcs11ecp.so",  # Рутокен
+            "libasepkcs.so",  # eToken
+            "libjcPKCS11.so",  # JaCarta
+            "libykcs11.so",  # YubiKey
+            "libopensc-pkcs11.so",  # OpenSC
+            "libP11.so",  # Generic
         ],
         "windows": [
-            "rtpkcs11ecp.dll",        # Рутокен
-            "asepkcs.dll",            # eToken
-            "jcPKCS11.dll",           # JaCarta
-            "ykcs11.dll",             # YubiKey
-            "opensc-pkcs11.dll",      # OpenSC
+            "rtpkcs11ecp.dll",  # Рутокен
+            "asepkcs.dll",  # eToken
+            "jcPKCS11.dll",  # JaCarta
+            "ykcs11.dll",  # YubiKey
+            "opensc-pkcs11.dll",  # OpenSC
         ],
         "darwin": [
             "librtpkcs11ecp.dylib",
@@ -371,8 +397,13 @@ class PKCS11Module:
             if os.path.exists(lib_name):
                 return os.path.abspath(lib_name)
             # Поиск в стандартных директориях
-            for d in ["/usr/lib", "/usr/lib64", "/usr/local/lib",
-                      "/opt/homebrew/lib", "C:\\Windows\\System32"]:
+            for d in [
+                "/usr/lib",
+                "/usr/lib64",
+                "/usr/local/lib",
+                "/opt/homebrew/lib",
+                "C:\\Windows\\System32",
+            ]:
                 p = os.path.join(d, lib_name)
                 if os.path.exists(p):
                     return p
@@ -431,11 +462,9 @@ class PKCS11Module:
 
         # Загружаем функции PKCS#11 C API напрямую по именам
         self._C_Initialize = self._get_function(
-            "C_Initialize", [CK_VOID_PTR], CK_RV
-        )
+            "C_Initialize", [CK_VOID_PTR], CK_RV)
         self._C_Finalize = self._get_function(
-            "C_Finalize", [CK_VOID_PTR], CK_RV
-        )
+            "C_Finalize", [CK_VOID_PTR], CK_RV)
         self._C_GetSlotList = self._get_function(
             "C_GetSlotList",
             [CK_BBOOL, ctypes.POINTER(CK_SLOT_ID), ctypes.POINTER(CK_ULONG)],
@@ -448,8 +477,13 @@ class PKCS11Module:
         )
         self._C_OpenSession = self._get_function(
             "C_OpenSession",
-            [CK_SLOT_ID, CK_FLAGS, CK_VOID_PTR, CK_NOTIFY,
-             ctypes.POINTER(CK_SESSION_HANDLE)],
+            [
+                CK_SLOT_ID,
+                CK_FLAGS,
+                CK_VOID_PTR,
+                CK_NOTIFY,
+                ctypes.POINTER(CK_SESSION_HANDLE),
+            ],
             CK_RV,
         )
         self._C_CloseSession = self._get_function(
@@ -461,8 +495,7 @@ class PKCS11Module:
             CK_RV,
         )
         self._C_Logout = self._get_function(
-            "C_Logout", [CK_SESSION_HANDLE], CK_RV
-        )
+            "C_Logout", [CK_SESSION_HANDLE], CK_RV)
         self._C_FindObjectsInit = self._get_function(
             "C_FindObjectsInit",
             [CK_SESSION_HANDLE, ctypes.POINTER(CK_ATTRIBUTE), CK_ULONG],
@@ -470,8 +503,12 @@ class PKCS11Module:
         )
         self._C_FindObjects = self._get_function(
             "C_FindObjects",
-            [CK_SESSION_HANDLE, ctypes.POINTER(CK_OBJECT_HANDLE),
-             CK_ULONG, ctypes.POINTER(CK_ULONG)],
+            [
+                CK_SESSION_HANDLE,
+                ctypes.POINTER(CK_OBJECT_HANDLE),
+                CK_ULONG,
+                ctypes.POINTER(CK_ULONG),
+            ],
             CK_RV,
         )
         self._C_FindObjectsFinal = self._get_function(
@@ -479,8 +516,12 @@ class PKCS11Module:
         )
         self._C_GetAttributeValue = self._get_function(
             "C_GetAttributeValue",
-            [CK_SESSION_HANDLE, CK_OBJECT_HANDLE,
-             ctypes.POINTER(CK_ATTRIBUTE), CK_ULONG],
+            [
+                CK_SESSION_HANDLE,
+                CK_OBJECT_HANDLE,
+                ctypes.POINTER(CK_ATTRIBUTE),
+                CK_ULONG,
+            ],
             CK_RV,
         )
 
@@ -527,9 +568,7 @@ class PKCS11Module:
 
         # Получаем список слотов
         slots = (CK_SLOT_ID * slot_count.value)()
-        rv = self._C_GetSlotList(
-            CK_BBOOL(1), slots, ctypes.byref(slot_count)
-        )
+        rv = self._C_GetSlotList(CK_BBOOL(1), slots, ctypes.byref(slot_count))
         if rv != CKR.OK:
             raise PKCS11Error("C_GetSlotList failed", rv)
 
@@ -566,7 +605,8 @@ class PKCS11Module:
         rv = self._C_OpenSession(
             CK_SLOT_ID(slot_id),
             CK_FLAGS(CKF.RW_SESSION | CKF.SERIAL_SESSION),
-            None, None,
+            None,
+            None,
             ctypes.byref(session),
         )
         if rv != CKR.OK:
@@ -622,7 +662,9 @@ class PKCS11Module:
 
         # Ищем все приватные ключи
         key_class = CK_OBJECT_CLASS(CKO.PRIVATE_KEY)
-        attr = CK_ATTRIBUTE(CKA.CLASS, ctypes.byref(key_class), ctypes.sizeof(key_class))
+        attr = CK_ATTRIBUTE(
+            CKA.CLASS, ctypes.byref(key_class), ctypes.sizeof(key_class)
+        )
 
         rv = self._C_FindObjectsInit(session, ctypes.byref(attr), 1)
         if rv != CKR.OK:
@@ -634,7 +676,9 @@ class PKCS11Module:
         obj_count = CK_ULONG(0)
 
         while True:
-            rv = self._C_FindObjects(session, objects, max_objects, ctypes.byref(obj_count))
+            rv = self._C_FindObjects(
+                session, objects, max_objects, ctypes.byref(obj_count)
+            )
             if rv != CKR.OK or obj_count.value == 0:
                 break
 
@@ -653,9 +697,14 @@ class PKCS11Module:
         id_attr = CK_ATTRIBUTE(CKA.ID, None, 0)
         label_attr = CK_ATTRIBUTE(CKA.LABEL, None, 0)
         key_type = CK_KEY_TYPE(0)
-        type_attr = CK_ATTRIBUTE(CKA.KEY_TYPE, ctypes.byref(key_type), ctypes.sizeof(key_type))
+        type_attr = CK_ATTRIBUTE(
+            CKA.KEY_TYPE, ctypes.byref(key_type), ctypes.sizeof(key_type)
+        )
         modulus_bits = CK_ULONG(0)
-        bits_attr = CK_ATTRIBUTE(CKA.MODULUS_BITS, ctypes.byref(modulus_bits), ctypes.sizeof(modulus_bits))
+        bits_attr = CK_ATTRIBUTE(
+            CKA.MODULUS_BITS, ctypes.byref(
+                modulus_bits), ctypes.sizeof(modulus_bits)
+        )
 
         size_attrs = (CK_ATTRIBUTE * 4)()
         size_attrs[0] = id_attr
@@ -668,11 +717,19 @@ class PKCS11Module:
             return None
 
         # Второй проход: получаем данные
-        id_buf = ctypes.create_string_buffer(size_attrs[0].ulValueLen) if size_attrs[0].ulValueLen > 0 else ctypes.create_string_buffer(1)
+        id_buf = (
+            ctypes.create_string_buffer(size_attrs[0].ulValueLen)
+            if size_attrs[0].ulValueLen > 0
+            else ctypes.create_string_buffer(1)
+        )
         size_attrs[0].pValue = ctypes.cast(id_buf, CK_VOID_PTR)
         size_attrs[0].ulValueLen = len(id_buf)
 
-        label_buf = ctypes.create_string_buffer(size_attrs[1].ulValueLen) if size_attrs[1].ulValueLen > 0 else ctypes.create_string_buffer(1)
+        label_buf = (
+            ctypes.create_string_buffer(size_attrs[1].ulValueLen)
+            if size_attrs[1].ulValueLen > 0
+            else ctypes.create_string_buffer(1)
+        )
         size_attrs[1].pValue = ctypes.cast(label_buf, CK_VOID_PTR)
         size_attrs[1].ulValueLen = len(label_buf)
 
@@ -714,6 +771,7 @@ class PKCS11Module:
 # ============================================================================
 # ФУНКЦИИ ВЫСОКОГО УРОВНЯ
 # ============================================================================
+
 
 def detect_token_type(library_path: str) -> TokenType:
     """Определить тип токена по пути к библиотеке."""

@@ -5,7 +5,7 @@
 
 import logging
 import sqlite3
-from typing import Optional, Any, Dict
+from typing import Optional, Any
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 class DatabaseSessionError(Exception):
     """Ошибка сессии БД."""
-    pass
 
 
 class DatabaseSession:
@@ -40,6 +39,7 @@ class DatabaseSession:
             try:
                 import psycopg2
                 from securevault.utils.config import get_config
+
                 cfg = get_config().get("database", {})
                 self._conn = psycopg2.connect(
                     host=cfg.get("host", "localhost"),

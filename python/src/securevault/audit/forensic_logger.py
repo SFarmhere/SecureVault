@@ -31,7 +31,6 @@ logger = logging.getLogger(__name__)
 
 class ForensicLoggerError(Exception):
     """Ошибка forensic логирования."""
-    pass
 
 
 class ForensicLogger:

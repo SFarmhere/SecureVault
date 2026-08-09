@@ -6,9 +6,8 @@
 Зависимости: dropbox
 """
 
-import io
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 import dropbox
 
 logger = logging.getLogger(__name__)
@@ -73,7 +72,8 @@ class DropboxClient:
         client = self._get_client()
         dropbox_path = self._resolve_path(path)
 
-        client.files_upload(data, dropbox_path, mode=dropbox.files.WriteMode.overwrite)
+        client.files_upload(data, dropbox_path,
+                            mode=dropbox.files.WriteMode.overwrite)
         logger.debug(f"Uploaded to Dropbox: {dropbox_path}")
 
     def download(self, path: str) -> bytes:
@@ -151,14 +151,16 @@ class DropboxClient:
 
         paths = []
         try:
-            result = client.files_list_folder(
-                dropbox_prefix, recursive=True
-            )
+            result = client.files_list_folder(dropbox_prefix, recursive=True)
             for entry in result.entries:
                 if isinstance(entry, dropbox.files.FileMetadata):
                     # Восстанавливаем относительный путь
                     full_path = entry.path_display
-                    rel = full_path[len(dropbox_prefix):] if full_path.startswith(dropbox_prefix) else full_path
+                    rel = (
+                        full_path[len(dropbox_prefix):]
+                        if full_path.startswith(dropbox_prefix)
+                        else full_path
+                    )
                     paths.append(rel)
         except Exception as e:
             logger.error(f"Failed to list Dropbox objects: {e}")
@@ -186,8 +188,9 @@ class DropboxClient:
                 raise FileNotFoundError(f"File not found: {path}")
             raise
 
-    def upload_stream(self, path: str, file_path: str,
-                      encrypt_fn=None, chunk_size: int = 65536) -> None:
+    def upload_stream(
+        self, path: str, file_path: str, encrypt_fn=None, chunk_size: int = 65536
+    ) -> None:
         """Потоково загрузить файл.
 
         Args:
@@ -208,12 +211,17 @@ class DropboxClient:
                     if not chunk:
                         break
                     data += encrypt_fn(chunk)
-                client.files_upload(data, dropbox_path, mode=dropbox.files.WriteMode.overwrite)
+                client.files_upload(
+                    data, dropbox_path, mode=dropbox.files.WriteMode.overwrite
+                )
             else:
-                client.files_upload(f.read(), dropbox_path, mode=dropbox.files.WriteMode.overwrite)
+                client.files_upload(
+                    f.read(), dropbox_path, mode=dropbox.files.WriteMode.overwrite
+                )
 
-    def download_stream(self, path: str, output_path: str,
-                        decrypt_fn=None, chunk_size: int = 65536) -> None:
+    def download_stream(
+        self, path: str, output_path: str, decrypt_fn=None, chunk_size: int = 65536
+    ) -> None:
         """Потоково скачать файл.
 
         Args:

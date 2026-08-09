@@ -6,9 +6,8 @@
 Зависимости: megapython
 """
 
-import io
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +60,9 @@ class MegaClient:
                 "MEGA credentials must include 'username'/'password' or 'token'"
             )
 
-        self._client = self._client.login() if hasattr(self._client, "login") else self._client
+        self._client = (
+            self._client.login() if hasattr(self._client, "login") else self._client
+        )
         return self._client
 
     def _get_folder_handle(self):
@@ -108,6 +109,7 @@ class MegaClient:
 
         # Загружаем во временный файл
         import tempfile
+
         with tempfile.NamedTemporaryFile(delete=False, suffix=".bin") as tmp:
             tmp.write(data)
             tmp_path = tmp.name
@@ -117,6 +119,7 @@ class MegaClient:
             logger.debug(f"Uploaded to MEGA: {flat_name}")
         finally:
             import os
+
             os.unlink(tmp_path)
 
     def download(self, path: str) -> bytes:
@@ -143,6 +146,7 @@ class MegaClient:
 
         # Скачиваем во временный файл
         import tempfile
+
         with tempfile.NamedTemporaryFile(delete=False, suffix=".bin") as tmp:
             tmp_path = tmp.name
 
@@ -152,6 +156,7 @@ class MegaClient:
                 return f.read()
         finally:
             import os
+
             os.unlink(tmp_path)
 
     def delete(self, path: str) -> bool:
@@ -239,8 +244,9 @@ class MegaClient:
         info = client.get_public_link(files[0])
         return {"size": info.get("size", 0) if info else 0}
 
-    def upload_stream(self, path: str, file_path: str,
-                      encrypt_fn=None, chunk_size: int = 65536) -> None:
+    def upload_stream(
+        self, path: str, file_path: str, encrypt_fn=None, chunk_size: int = 65536
+    ) -> None:
         """Потоково загрузить файл.
 
         Args:
@@ -257,6 +263,7 @@ class MegaClient:
         if encrypt_fn:
             # Шифруем кусками и загружаем
             import tempfile
+
             with tempfile.NamedTemporaryFile(delete=False, suffix=".bin") as tmp:
                 tmp_path = tmp.name
                 with open(file_path, "rb") as f:
@@ -270,12 +277,14 @@ class MegaClient:
                 client.upload(tmp_path, folder, flat_name)
             finally:
                 import os
+
                 os.unlink(tmp_path)
         else:
             client.upload(file_path, folder, flat_name)
 
-    def download_stream(self, path: str, output_path: str,
-                        decrypt_fn=None, chunk_size: int = 65536) -> None:
+    def download_stream(
+        self, path: str, output_path: str, decrypt_fn=None, chunk_size: int = 65536
+    ) -> None:
         """Потоково скачать файл.
 
         Args:
@@ -294,6 +303,7 @@ class MegaClient:
             raise FileNotFoundError(f"File not found in MEGA: {path}")
 
         import tempfile
+
         with tempfile.NamedTemporaryFile(delete=False, suffix=".bin") as tmp:
             tmp_path = tmp.name
 
@@ -314,6 +324,7 @@ class MegaClient:
                         dst.write(chunk)
         finally:
             import os
+
             os.unlink(tmp_path)
 
     def close(self) -> None:

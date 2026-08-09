@@ -20,22 +20,22 @@ SecureVault - Менеджер ключей
     from securevault.core.key_manager import KeyManager
 
     km = KeyManager()
-    
+
     # Генерация мастер-ключа
     master_key = km.generate_master_key()
-    
+
     # Хранение в HSM
     km.store_key_securely(master_key, "master-key-1")
-    
+
     # Получение из HSM
     retrieved = km.retrieve_key("master-key-1")
-    
+
     # Ротация
     km.rotate_keys("master-key-1")
-    
+
     # Резервное копирование
     shares = km.backup_keys(master_key)
-    
+
     # Уничтожение
     km.destroy_key("master-key-1")
 """
@@ -55,7 +55,6 @@ from securevault.native import pkcs11
 from securevault.native import crypto
 from securevault.security import shamir
 from securevault import exceptions
-from securevault import constants
 
 logger = logging.getLogger(__name__)
 
@@ -64,39 +63,43 @@ logger = logging.getLogger(__name__)
 # КОНСТАНТЫ И КОНФИГУРАЦИЯ
 # ============================================================================
 
+
 class KeyType(Enum):
     """Типы ключей."""
-    MASTER = "master"           # Мастер-ключ (главный ключ шифрования)
-    FILE = "file"               # Ключ для отдельного файла
-    PASSWORD = "password"       # Ключ, деривированный из пароля
-    TOKEN = "token"             # Ключ на HSM/токене
-    SESSION = "session"         # Временный сессионный ключ
+
+    MASTER = "master"  # Мастер-ключ (главный ключ шифрования)
+    FILE = "file"  # Ключ для отдельного файла
+    PASSWORD = "password"  # Ключ, деривированный из пароля
+    TOKEN = "token"  # Ключ на HSM/токене
+    SESSION = "session"  # Временный сессионный ключ
 
 
 class KeyStatus(Enum):
     """Статусы ключа."""
-    ACTIVE = "active"           # Активный, используется
-    ROTATED = "rotated"         # Заменен новой версией
-    ARCHIVED = "archived"       # В архиве (можно восстановить)
-    DESTROYED = "destroyed"     # Уничтожен
+
+    ACTIVE = "active"  # Активный, используется
+    ROTATED = "rotated"  # Заменен новой версией
+    ARCHIVED = "archived"  # В архиве (можно восстановить)
+    DESTROYED = "destroyed"  # Уничтожен
 
 
 class ProtectionLevel(Enum):
     """Уровни защиты ключей."""
-    SOFTWARE = "software"       # Программное хранение (зашифровано)
-    HARDWARE = "hardware"       # Аппаратное хранение (HSM/токен)
-    HYBRID = "hybrid"           # Гибрид (часть в HSM, часть программно)
+
+    SOFTWARE = "software"  # Программное хранение (зашифровано)
+    HARDWARE = "hardware"  # Аппаратное хранение (HSM/токен)
+    HYBRID = "hybrid"  # Гибрид (часть в HSM, часть программно)
 
 
 # Параметры по умолчанию
-DEFAULT_MASTER_KEY_SIZE = 32        # 256 бит (AES-256)
-DEFAULT_FILE_KEY_SIZE = 32          # 256 бит
-DEFAULT_SESSION_KEY_SIZE = 32       # 256 бит
-DEFAULT_PASSWORD_KEY_SIZE = 32      # 256 бит
+DEFAULT_MASTER_KEY_SIZE = 32  # 256 бит (AES-256)
+DEFAULT_FILE_KEY_SIZE = 32  # 256 бит
+DEFAULT_SESSION_KEY_SIZE = 32  # 256 бит
+DEFAULT_PASSWORD_KEY_SIZE = 32  # 256 бит
 
 # Параметры Argon2id для деривации ключей из паролей
 ARGON2_TIME_COST = 3
-ARGON2_MEMORY_COST = 65536          # 64 MB
+ARGON2_MEMORY_COST = 65536  # 64 MB
 ARGON2_PARALLELISM = 4
 ARGON2_HASH_LENGTH = 32
 ARGON2_SALT_LENGTH = 16
@@ -114,6 +117,7 @@ METADATA_FILE = "key_metadata.json"
 # ============================================================================
 # МЕТАДАННЫЕ КЛЮЧА
 # ============================================================================
+
 
 class KeyMetadata:
     """Метаданные ключа для отслеживания жизненного цикла."""
@@ -167,7 +171,11 @@ class KeyMetadata:
             status=KeyStatus(data["status"]),
             protection_level=ProtectionLevel(data["protection_level"]),
             created_at=datetime.fromisoformat(data["created_at"]),
-            expires_at=datetime.fromisoformat(data["expires_at"]) if data.get("expires_at") else None,
+            expires_at=(
+                datetime.fromisoformat(data["expires_at"])
+                if data.get("expires_at")
+                else None
+            ),
             rotated_from=data.get("rotated_from"),
             description=data.get("description", ""),
             tags=data.get("tags", []),
@@ -178,44 +186,39 @@ class KeyMetadata:
 # ИСКЛЮЧЕНИЯ
 # ============================================================================
 
+
 class KeyManagerError(exceptions.SecureVaultError):
     """Базовое исключение для KeyManager."""
-    pass
 
 
 class KeyNotFoundError(KeyManagerError):
     """Ключ не найден."""
-    pass
 
 
 class KeyAlreadyExistsError(KeyManagerError):
     """Ключ уже существует."""
-    pass
 
 
 class KeyExpiredError(KeyManagerError):
     """Ключ истек."""
-    pass
 
 
 class KeyDestroyedError(KeyManagerError):
     """Ключ был уничтожен."""
-    pass
 
 
 class TokenError(KeyManagerError):
     """Ошибка работы с токеном."""
-    pass
 
 
 class InsufficientSharesError(KeyManagerError):
     """Недостаточно shares для восстановления."""
-    pass
 
 
 # ============================================================================
 # ОСНОВНОЙ КЛАСС
 # ============================================================================
+
 
 class KeyManager:
     """
@@ -528,7 +531,8 @@ class KeyManager:
         # Определение уровня защиты
         if protection_level is None:
             protection_level = (
-                ProtectionLevel.HARDWARE if self._token_available
+                ProtectionLevel.HARDWARE
+                if self._token_available
                 else ProtectionLevel.SOFTWARE
             )
 
@@ -599,11 +603,15 @@ class KeyManager:
 
         # Проверка срока действия
         if metadata.expires_at and datetime.utcnow() > metadata.expires_at:
-            raise KeyExpiredError(f"Key {key_id} expired at {metadata.expires_at}")
+            raise KeyExpiredError(
+                f"Key {key_id} expired at {metadata.expires_at}")
 
         try:
             # Получение из хранилища
-            if metadata.protection_level == ProtectionLevel.HARDWARE and self._token_available:
+            if (
+                metadata.protection_level == ProtectionLevel.HARDWARE
+                and self._token_available
+            ):
                 key = self._retrieve_key_from_token(key_id)
             else:
                 key = self._retrieve_key_encrypted(key_id)
@@ -638,7 +646,10 @@ class KeyManager:
 
         try:
             # Удаление из хранилища
-            if metadata.protection_level == ProtectionLevel.HARDWARE and self._token_available:
+            if (
+                metadata.protection_level == ProtectionLevel.HARDWARE
+                and self._token_available
+            ):
                 self._destroy_key_on_token(key_id)
             else:
                 self._destroy_key_encrypted(key_id, secure=secure)
@@ -757,13 +768,17 @@ class KeyManager:
 
         try:
             sss = shamir.ShamirSecretSharing()
-            shares = sss.split(master_key, total=total_shares, threshold=threshold)
+            shares = sss.split(
+                master_key, total=total_shares, threshold=threshold)
 
             # Сериализация
             serialized = [s.serialize() for s in shares]
 
             # Сохранение бэкапа
-            backup_file = self.backup_dir / f"backup-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.dat"
+            backup_file = (
+                self.backup_dir
+                / f"backup-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.dat"
+            )
             with open(backup_file, "wb") as f:
                 f.write(
                     total_shares.to_bytes(1, "big")
@@ -813,7 +828,8 @@ class KeyManager:
                 if len(recovered) not in (16, 24, 32):
                     raise KeyManagerError("Recovered key has invalid length")
 
-            logger.info(f"Master key restored from backup ({len(shares)} shares)")
+            logger.info(
+                f"Master key restored from backup ({len(shares)} shares)")
             return recovered
 
         except Exception as e:
@@ -960,7 +976,9 @@ class KeyManager:
 
         # TODO: Реализовать сохранение ключа на токен
         # Требуется: открыть сессию, создать объект CKO_SECRET_KEY
-        logger.warning("Token key storage not fully implemented, falling back to software")
+        logger.warning(
+            "Token key storage not fully implemented, falling back to software"
+        )
 
     def _retrieve_key_from_token(self, key_id: str) -> bytes:
         """
@@ -1112,11 +1130,11 @@ class KeyManager:
 
         try:
             import json
+
             with open(self.metadata_file, "r") as f:
                 data = json.load(f)
                 self.metadata = {
-                    key_id: KeyMetadata.from_dict(meta)
-                    for key_id, meta in data.items()
+                    key_id: KeyMetadata.from_dict(meta) for key_id, meta in data.items()
                 }
             logger.debug(f"Loaded {len(self.metadata)} key metadata")
 
@@ -1128,10 +1146,9 @@ class KeyManager:
         """Сохранить метаданные в файл."""
         try:
             import json
-            data = {
-                key_id: meta.to_dict()
-                for key_id, meta in self.metadata.items()
-            }
+
+            data = {key_id: meta.to_dict()
+                    for key_id, meta in self.metadata.items()}
             with open(self.metadata_file, "w") as f:
                 json.dump(data, f, indent=2)
             logger.debug("Metadata saved")
@@ -1143,6 +1160,7 @@ class KeyManager:
 # ============================================================================
 # ФУНКЦИИ ВЫСОКОГО УРОВНЯ
 # ============================================================================
+
 
 def create_key_manager(
     storage_dir: Optional[str] = None,
@@ -1176,7 +1194,9 @@ def quick_generate_key(size: int = 32) -> bytes:
     return secrets.token_bytes(size)
 
 
-def quick_derive_key(password: str, salt: Optional[bytes] = None) -> Tuple[bytes, bytes]:
+def quick_derive_key(
+    password: str, salt: Optional[bytes] = None
+) -> Tuple[bytes, bytes]:
     """
     Быстрая деривация ключа из пароля.
 
@@ -1194,6 +1214,7 @@ def quick_derive_key(password: str, salt: Optional[bytes] = None) -> Tuple[bytes
 # ============================================================================
 # УТИЛИТЫ
 # ============================================================================
+
 
 def validate_key_strength(key: bytes) -> bool:
     """

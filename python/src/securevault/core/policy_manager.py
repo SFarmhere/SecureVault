@@ -58,21 +58,17 @@ SecureVault - Менеджер политик безопасности
     pm.audit_action("user1", "encrypt", "success", {"file": "document.pdf"})
 """
 
-import os
 import json
 import hashlib
-import hmac
 import logging
-import secrets
-from typing import Optional, List, Dict, Any, Union, Set
+from typing import Optional, List, Dict, Any, Set
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 from dataclasses import dataclass, field
 from enum import Enum
 
 # Внутренние импорты
 from securevault.core import key_manager
-from securevault.native import crypto
 from securevault import exceptions
 from securevault import constants
 
@@ -83,42 +79,48 @@ logger = logging.getLogger(__name__)
 # КОНСТАНТЫ И КОНФИГУРАЦИЯ
 # ============================================================================
 
+
 class PolicyStatus(Enum):
     """Статусы политик."""
-    ACTIVE = "active"           # Активна, применяется
-    INACTIVE = "inactive"       # Не активна, не применяется
-    PENDING = "pending"         # Ожидает активации
-    EXPIRED = "expired"         # Срок действия истек
-    DRAFT = "draft"             # Черновик (не применяется)
+
+    ACTIVE = "active"  # Активна, применяется
+    INACTIVE = "inactive"  # Не активна, не применяется
+    PENDING = "pending"  # Ожидает активации
+    EXPIRED = "expired"  # Срок действия истек
+    DRAFT = "draft"  # Черновик (не применяется)
 
 
 class PolicyType(Enum):
     """Типы политик безопасности."""
-    ACCESS = "access"                   # Контроль доступа
-    OPERATION = "operation"             # Контроль операций
-    KEY_MANAGEMENT = "key_management"   # Управление ключами
-    DATA_HANDLING = "data_handling"     # Обработка данных
-    COMPLIANCE = "compliance"           # Соответствие требованиям
+
+    ACCESS = "access"  # Контроль доступа
+    OPERATION = "operation"  # Контроль операций
+    KEY_MANAGEMENT = "key_management"  # Управление ключами
+    DATA_HANDLING = "data_handling"  # Обработка данных
+    COMPLIANCE = "compliance"  # Соответствие требованиям
 
 
 class PolicySeverity(Enum):
     """Уровни строгости политик."""
-    LOW = "low"             # Низкий - предупреждения, не блокирует
-    MEDIUM = "medium"       # Средний - ограничения
-    HIGH = "high"           # Высокий - запрещает небезопасные операции
-    CRITICAL = "critical"   # Критический - полный контроль
+
+    LOW = "low"  # Низкий - предупреждения, не блокирует
+    MEDIUM = "medium"  # Средний - ограничения
+    HIGH = "high"  # Высокий - запрещает небезопасные операции
+    CRITICAL = "critical"  # Критический - полный контроль
 
 
 class Decision(Enum):
     """Решения по результату проверки."""
-    ALLOW = "allow"         # Разрешено
-    DENY = "deny"           # Запрещено
+
+    ALLOW = "allow"  # Разрешено
+    DENY = "deny"  # Запрещено
     REQUIRE_CONDITION = "require_condition"  # Требует выполнения условия
 
 
 # Действия (операции), контролируемые политиками
 class Action:
     """Типы действий, контролируемых политиками."""
+
     ENCRYPT = "encrypt"
     DECRYPT = "decrypt"
     CREATE_CONTAINER = "create_container"
@@ -142,6 +144,7 @@ class Action:
 # Роли пользователей
 class Role:
     """Роли пользователей в системе."""
+
     ADMIN = "admin"
     OPERATOR = "operator"
     USER = "user"
@@ -157,6 +160,7 @@ POLICY_CONFIG_FILE = "policies.json"
 # ============================================================================
 # МЕТАДАННЫЕ ПОЛИТИКИ
 # ============================================================================
+
 
 @dataclass
 class PolicyMetadata:
@@ -181,23 +185,29 @@ class PolicyMetadata:
     roles: List[str] = field(default_factory=list)
 
     # Ограничения
-    max_protection_level: Optional[str] = None     # Максимальный уровень защиты
-    min_key_size: int = 0                          # Минимальный размер ключа (байт)
-    max_file_size: Optional[int] = None            # Максимальный размер файла (байт)
-    password_min_length: int = 8                   # Мин. длина пароля
-    require_mfa: bool = False                      # Требовать MFA
-    require_token: bool = False                    # Требовать аппаратный токен
+    # Максимальный уровень защиты
+    max_protection_level: Optional[str] = None
+    # Минимальный размер ключа (байт)
+    min_key_size: int = 0
+    # Максимальный размер файла (байт)
+    max_file_size: Optional[int] = None
+    password_min_length: int = 8  # Мин. длина пароля
+    require_mfa: bool = False  # Требовать MFA
+    require_token: bool = False  # Требовать аппаратный токен
 
     # Временные ограничения
-    valid_from: Optional[datetime] = None          # С какого времени действует
-    valid_until: Optional[datetime] = None         # До какого времени действует
+    valid_from: Optional[datetime] = None  # С какого времени действует
+    # До какого времени действует
+    valid_until: Optional[datetime] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 
     # Дополнительно
-    conditions: Dict[str, Any] = field(default_factory=dict)  # Дополнительные условия
-    metadata: Dict[str, Any] = field(default_factory=dict)    # Произвольные метаданные
-    version: int = 1                               # Версия политики
+    conditions: Dict[str, Any] = field(
+        default_factory=dict)  # Дополнительные условия
+    metadata: Dict[str, Any] = field(
+        default_factory=dict)  # Произвольные метаданные
+    version: int = 1  # Версия политики
     tags: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -247,8 +257,16 @@ class PolicyMetadata:
             password_min_length=data.get("password_min_length", 8),
             require_mfa=data.get("require_mfa", False),
             require_token=data.get("require_token", False),
-            valid_from=datetime.fromisoformat(data["valid_from"]) if data.get("valid_from") else None,
-            valid_until=datetime.fromisoformat(data["valid_until"]) if data.get("valid_until") else None,
+            valid_from=(
+                datetime.fromisoformat(data["valid_from"])
+                if data.get("valid_from")
+                else None
+            ),
+            valid_until=(
+                datetime.fromisoformat(data["valid_until"])
+                if data.get("valid_until")
+                else None
+            ),
             created_at=datetime.fromisoformat(data["created_at"]),
             updated_at=datetime.fromisoformat(data["updated_at"]),
             conditions=data.get("conditions", {}),
@@ -262,6 +280,7 @@ class PolicyMetadata:
 # РЕЗУЛЬТАТ ВАЛИДАЦИИ
 # ============================================================================
 
+
 @dataclass
 class PolicyDecision:
     """
@@ -271,12 +290,13 @@ class PolicyDecision:
     причины и рекомендации.
     """
 
-    allowed: bool                           # Разрешено или нет
-    policy_id: Optional[str] = None         # ID применимой политики
-    policy_name: Optional[str] = None       # Имя применяемой политики
-    reasons: List[str] = field(default_factory=list)      # Причины решения
-    conditions_required: List[str] = field(default_factory=list)  # Требуемые условия
-    warnings: List[str] = field(default_factory=list)     # Предупреждения
+    allowed: bool  # Разрешено или нет
+    policy_id: Optional[str] = None  # ID применимой политики
+    policy_name: Optional[str] = None  # Имя применяемой политики
+    reasons: List[str] = field(default_factory=list)  # Причины решения
+    conditions_required: List[str] = field(
+        default_factory=list)  # Требуемые условия
+    warnings: List[str] = field(default_factory=list)  # Предупреждения
 
     def to_dict(self) -> Dict[str, Any]:
         """Сериализовать в словарь."""
@@ -295,49 +315,43 @@ class PolicyDecision:
 # ИСКЛЮЧЕНИЯ
 # ============================================================================
 
+
 class PolicyManagerError(exceptions.PolicyError):
     """Базовое исключение для PolicyManager."""
-    pass
 
 
 class PolicyNotFoundError(PolicyManagerError, exceptions.PolicyNotFoundError):
     """Политика не найдена."""
-    pass
 
 
 class PolicyAlreadyExistsError(PolicyManagerError, exceptions.PolicyAlreadyExistsError):
     """Политика уже существует."""
-    pass
 
 
 class PolicyViolationError(PolicyManagerError, exceptions.PolicyViolationError):
     """Нарушение политики безопасности."""
-    pass
 
 
 class AccessDeniedError(PolicyManagerError, exceptions.AccessDeniedError):
     """Доступ запрещен политикой."""
-    pass
 
 
 class OperationNotAllowedError(PolicyManagerError, exceptions.OperationNotAllowedError):
     """Операция не разрешена политикой."""
-    pass
 
 
 class InvalidPolicyError(PolicyManagerError, exceptions.InvalidPolicyError):
     """Невалидная политика."""
-    pass
 
 
 class PolicyExpiredError(PolicyManagerError, exceptions.PolicyExpiredError):
     """Политика истекла."""
-    pass
 
 
 # ============================================================================
 # ОСНОВНОЙ КЛАСС
 # ============================================================================
+
 
 class PolicyManager:
     """
@@ -548,7 +562,8 @@ class PolicyManager:
 
         # Проверка существования
         if policy_id in self.policies:
-            raise PolicyAlreadyExistsError(f"Policy {policy_id} already exists")
+            raise PolicyAlreadyExistsError(
+                f"Policy {policy_id} already exists")
 
         # Создание метаданных
         policy = PolicyMetadata(
@@ -587,7 +602,8 @@ class PolicyManager:
             user_id="system",
             action=Action.POLICY_MANAGE,
             result="success",
-            details={"event": "create_policy", "policy_id": policy_id, "name": name},
+            details={"event": "create_policy",
+                     "policy_id": policy_id, "name": name},
         )
 
         logger.info(f"Policy created: {policy_id} ({name})")
@@ -656,10 +672,8 @@ class PolicyManager:
         Returns:
             Список активных политик, применимых к ролям/действию.
         """
-        active = [
-            p for p in self.policies.values()
-            if p.status == PolicyStatus.ACTIVE
-        ]
+        active = [p for p in self.policies.values() if p.status ==
+                  PolicyStatus.ACTIVE]
 
         # Проверка срока действия
         result = []
@@ -668,11 +682,15 @@ class PolicyManager:
             if policy.status == PolicyStatus.ACTIVE:
                 if roles and policy.roles and not set(roles) & set(policy.roles):
                     continue
-                if action and policy.allowed_actions and action not in policy.allowed_actions:
+                if (
+                    action
+                    and policy.allowed_actions
+                    and action not in policy.allowed_actions
+                ):
                     continue
                 result.append(policy)
 
-        return sorted(result, key=lambda p: p.priority if hasattr(p, 'priority') else 0)
+        return sorted(result, key=lambda p: p.priority if hasattr(p, "priority") else 0)
 
     def update_policy(
         self,
@@ -722,12 +740,28 @@ class PolicyManager:
         # Валидация новых параметров
         self._validate_policy_params(
             name=name or policy.name,
-            allowed_actions=allowed_actions if allowed_actions is not None else policy.allowed_actions,
-            denied_actions=denied_actions if denied_actions is not None else policy.denied_actions,
+            allowed_actions=(
+                allowed_actions
+                if allowed_actions is not None
+                else policy.allowed_actions
+            ),
+            denied_actions=(
+                denied_actions if denied_actions is not None else policy.denied_actions
+            ),
             roles=roles if roles is not None else policy.roles,
-            max_protection_level=max_protection_level if max_protection_level is not None else policy.max_protection_level,
-            min_key_size=min_key_size if min_key_size is not None else policy.min_key_size,
-            password_min_length=password_min_length if password_min_length is not None else policy.password_min_length,
+            max_protection_level=(
+                max_protection_level
+                if max_protection_level is not None
+                else policy.max_protection_level
+            ),
+            min_key_size=(
+                min_key_size if min_key_size is not None else policy.min_key_size
+            ),
+            password_min_length=(
+                password_min_length
+                if password_min_length is not None
+                else policy.password_min_length
+            ),
         )
 
         # Обновление полей
@@ -826,7 +860,11 @@ class PolicyManager:
             user_id="system",
             action=Action.POLICY_MANAGE,
             result="success",
-            details={"event": "delete_policy", "policy_id": policy_id, "name": removed.name},
+            details={
+                "event": "delete_policy",
+                "policy_id": policy_id,
+                "name": removed.name,
+            },
         )
 
         logger.info(f"Policy deleted: {policy_id} ({removed.name})")
@@ -874,8 +912,7 @@ class PolicyManager:
         if not active_policies:
             if self.strict_mode and roles:
                 reasons = [
-                    f"No policy allows action '{action}' for roles {roles}"
-                ]
+                    f"No policy allows action '{action}' for roles {roles}"]
                 return PolicyDecision(allowed=False, reasons=reasons)
             else:
                 # В нестрогом режиме разрешаем, если нет запретов
@@ -908,12 +945,13 @@ class PolicyManager:
         if allowed_by_policy is None:
             if self.strict_mode:
                 reasons.append(
-                    f"No active policy allows action '{action}' "
-                    f"for user {user_id}"
+                    f"No active policy allows action '{action}' " f"for user {user_id}"
                 )
                 return PolicyDecision(allowed=False, reasons=reasons)
             else:
-                warnings.append(f"Action '{action}' not explicitly allowed by any policy")
+                warnings.append(
+                    f"Action '{action}' not explicitly allowed by any policy"
+                )
 
         # Проверка контекстных условий
         if allowed_by_policy:
@@ -1317,7 +1355,9 @@ class PolicyManager:
         max_level = None
         for policy in self.get_active_policies(roles=roles):
             if policy.max_protection_level:
-                if max_level is None or self._level_rank(policy.max_protection_level) < self._level_rank(max_level):
+                if max_level is None or self._level_rank(
+                    policy.max_protection_level
+                ) < self._level_rank(max_level):
                     max_level = policy.max_protection_level
 
         if max_level is None:
@@ -1380,12 +1420,14 @@ class PolicyManager:
 
         # Действия
         if allowed_actions:
-            invalid = [a for a in allowed_actions if a not in constants.POLICY_ACTIONS]
+            invalid = [
+                a for a in allowed_actions if a not in constants.POLICY_ACTIONS]
             if invalid:
                 raise InvalidPolicyError(f"Invalid actions: {invalid}")
 
         if denied_actions:
-            invalid = [a for a in denied_actions if a not in constants.POLICY_ACTIONS]
+            invalid = [
+                a for a in denied_actions if a not in constants.POLICY_ACTIONS]
             if invalid:
                 raise InvalidPolicyError(f"Invalid actions: {invalid}")
 
@@ -1443,6 +1485,7 @@ class PolicyManager:
 
         # Вычисляем подпись
         import hashlib
+
         return hashlib.sha256(data).hexdigest()[:16]
 
     def _load_policies(self) -> None:
@@ -1557,12 +1600,14 @@ class PolicyManager:
         )
 
         self._save_policies()
-        logger.info(f"Created {len(self._default_policy_ids)} default policies")
+        logger.info(
+            f"Created {len(self._default_policy_ids)} default policies")
 
 
 # ============================================================================
 # ФУНКЦИИ ВЫСОКОГО УРОВНЯ
 # ============================================================================
+
 
 def create_policy_manager(
     storage_dir: Optional[str] = None,
@@ -1608,7 +1653,6 @@ __all__ = [
     "PolicyManager",
     "PolicyMetadata",
     "PolicyDecision",
-    
     # Константы
     "PolicyStatus",
     "PolicyType",
@@ -1616,7 +1660,6 @@ __all__ = [
     "Decision",
     "Action",
     "Role",
-    
     # Исключения
     "PolicyManagerError",
     "PolicyNotFoundError",
@@ -1626,7 +1669,6 @@ __all__ = [
     "OperationNotAllowedError",
     "InvalidPolicyError",
     "PolicyExpiredError",
-    
     # Функции
     "create_policy_manager",
     "quick_check_access",

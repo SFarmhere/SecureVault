@@ -8,7 +8,7 @@
 
 import io
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +57,7 @@ class GoogleDriveClient:
             )
         elif "credentials_json" in creds_data:
             import json
+
             creds = service_account.Credentials.from_service_account_info(
                 json.loads(creds_data["credentials_json"]),
                 scopes=["https://www.googleapis.com/auth/drive.file"],
@@ -77,24 +78,32 @@ class GoogleDriveClient:
 
         service = self._get_service()
         # Ищем папку по имени
-        results = service.files().list(
-            q=f"mimeType='application/vnd.google-apps.folder' and "
-              f"name='{self.bucket}' and trashed=false",
-            fields="files(id, name)",
-        ).execute()
+        results = (
+            service.files()
+            .list(
+                q=f"mimeType='application/vnd.google-apps.folder' and "
+                f"name='{self.bucket}' and trashed=false",
+                fields="files(id, name)",
+            )
+            .execute()
+        )
 
         files = results.get("files", [])
         if files:
             self._folder_id = files[0]["id"]
         else:
             # Создаём папку
-            folder = service.files().create(
-                body={
-                    "name": self.bucket,
-                    "mimeType": "application/vnd.google-apps.folder",
-                },
-                fields="id",
-            ).execute()
+            folder = (
+                service.files()
+                .create(
+                    body={
+                        "name": self.bucket,
+                        "mimeType": "application/vnd.google-apps.folder",
+                    },
+                    fields="id",
+                )
+                .execute()
+            )
             self._folder_id = folder["id"]
 
         return self._folder_id
@@ -150,10 +159,14 @@ class GoogleDriveClient:
         folder_id = self._get_folder_id()
         name = self._resolve_path(path)
 
-        results = service.files().list(
-            q=f"'{folder_id}' in parents and name='{name}' and trashed=false",
-            fields="files(id, name)",
-        ).execute()
+        results = (
+            service.files()
+            .list(
+                q=f"'{folder_id}' in parents and name='{name}' and trashed=false",
+                fields="files(id, name)",
+            )
+            .execute()
+        )
 
         files = results.get("files", [])
         if not files:
@@ -177,10 +190,14 @@ class GoogleDriveClient:
         folder_id = self._get_folder_id()
         name = self._resolve_path(path)
 
-        results = service.files().list(
-            q=f"'{folder_id}' in parents and name='{name}' and trashed=false",
-            fields="files(id, name)",
-        ).execute()
+        results = (
+            service.files()
+            .list(
+                q=f"'{folder_id}' in parents and name='{name}' and trashed=false",
+                fields="files(id, name)",
+            )
+            .execute()
+        )
 
         files = results.get("files", [])
         if not files:
@@ -202,10 +219,14 @@ class GoogleDriveClient:
         folder_id = self._get_folder_id()
         name = self._resolve_path(path)
 
-        results = service.files().list(
-            q=f"'{folder_id}' in parents and name='{name}' and trashed=false",
-            fields="files(id)",
-        ).execute()
+        results = (
+            service.files()
+            .list(
+                q=f"'{folder_id}' in parents and name='{name}' and trashed=false",
+                fields="files(id)",
+            )
+            .execute()
+        )
 
         return len(results.get("files", [])) > 0
 
@@ -221,11 +242,15 @@ class GoogleDriveClient:
         service = self._get_service()
         folder_id = self._get_folder_id()
 
-        results = service.files().list(
-            q=f"'{folder_id}' in parents and trashed=false",
-            fields="files(id, name)",
-            pageSize=1000,
-        ).execute()
+        results = (
+            service.files()
+            .list(
+                q=f"'{folder_id}' in parents and trashed=false",
+                fields="files(id, name)",
+                pageSize=1000,
+            )
+            .execute()
+        )
 
         paths = []
         for f in results.get("files", []):
@@ -250,10 +275,14 @@ class GoogleDriveClient:
         folder_id = self._get_folder_id()
         name = self._resolve_path(path)
 
-        results = service.files().list(
-            q=f"'{folder_id}' in parents and name='{name}' and trashed=false",
-            fields="files(id, name, size)",
-        ).execute()
+        results = (
+            service.files()
+            .list(
+                q=f"'{folder_id}' in parents and name='{name}' and trashed=false",
+                fields="files(id, name, size)",
+            )
+            .execute()
+        )
 
         files = results.get("files", [])
         if not files:
@@ -261,8 +290,9 @@ class GoogleDriveClient:
 
         return {"size": int(files[0].get("size", 0))}
 
-    def upload_stream(self, path: str, file_path: str,
-                      encrypt_fn=None, chunk_size: int = 65536) -> None:
+    def upload_stream(
+        self, path: str, file_path: str, encrypt_fn=None, chunk_size: int = 65536
+    ) -> None:
         """Потоково загрузить файл.
 
         Args:
@@ -294,8 +324,9 @@ class GoogleDriveClient:
                 fields="id",
             ).execute()
 
-    def download_stream(self, path: str, output_path: str,
-                        decrypt_fn=None, chunk_size: int = 65536) -> None:
+    def download_stream(
+        self, path: str, output_path: str, decrypt_fn=None, chunk_size: int = 65536
+    ) -> None:
         """Потоково скачать файл.
 
         Args:
@@ -308,10 +339,14 @@ class GoogleDriveClient:
         folder_id = self._get_folder_id()
         name = self._resolve_path(path)
 
-        results = service.files().list(
-            q=f"'{folder_id}' in parents and name='{name}' and trashed=false",
-            fields="files(id)",
-        ).execute()
+        results = (
+            service.files()
+            .list(
+                q=f"'{folder_id}' in parents and name='{name}' and trashed=false",
+                fields="files(id)",
+            )
+            .execute()
+        )
 
         files = results.get("files", [])
         if not files:
@@ -323,7 +358,8 @@ class GoogleDriveClient:
                 chunk = request.next_chunk()
                 if chunk is None:
                     break
-                data = chunk[0].execute() if hasattr(chunk[0], "execute") else chunk[0]
+                data = chunk[0].execute() if hasattr(
+                    chunk[0], "execute") else chunk[0]
                 if decrypt_fn:
                     out.write(decrypt_fn(data))
                 else:

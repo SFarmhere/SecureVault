@@ -17,7 +17,6 @@ Yandex Disk, Mega) с обязательным сквозным шифрован
 import hashlib
 import json
 import logging
-import os
 import threading
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -30,7 +29,6 @@ logger = logging.getLogger(__name__)
 
 class CloudStorageError(exceptions.StorageBackendError):
     """Ошибка облачного хранилища."""
-    pass
 
 
 class CloudStorageBackend(StorageBackend):
@@ -206,7 +204,8 @@ class CloudStorageBackend(StorageBackend):
             return nonce + ciphertext
         except ImportError:
             # Fallback: используем EncryptionService
-            logger.debug("Using EncryptionService fallback for cloud encryption")
+            logger.debug(
+                "Using EncryptionService fallback for cloud encryption")
             km = KeyManager()
             key_id = "cloud-storage-key"
             km.store_key_securely(self.encryption_key, key_id)
@@ -228,7 +227,6 @@ class CloudStorageBackend(StorageBackend):
             return data
 
         try:
-            import os as _os
             from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
             nonce = data[:12]
@@ -275,8 +273,9 @@ class CloudStorageBackend(StorageBackend):
     # Интерфейс StorageBackend
     # ------------------------------------------------------------------
 
-    def store(self, key: str, data: bytes,
-              metadata: Optional[StorageMetadata] = None) -> str:
+    def store(
+        self, key: str, data: bytes, metadata: Optional[StorageMetadata] = None
+    ) -> str:
         """Загрузить данные в облако (с шифрованием).
 
         Args:
@@ -310,8 +309,7 @@ class CloudStorageBackend(StorageBackend):
                     )
             except Exception as e:
                 raise CloudStorageError(
-                    f"Failed to store '{key}' to cloud: {e}"
-                ) from e
+                    f"Failed to store '{key}' to cloud: {e}") from e
 
             return key
 
@@ -425,8 +423,7 @@ class CloudStorageBackend(StorageBackend):
                 paths = self._client.list_objects(prefix=self.prefix)
             except Exception as e:
                 raise CloudStorageError(
-                    f"Failed to list cloud keys: {e}"
-                ) from e
+                    f"Failed to list cloud keys: {e}") from e
 
             keys: List[str] = []
             for path in paths:
@@ -471,8 +468,9 @@ class CloudStorageBackend(StorageBackend):
                 return None
             return json.loads(data.decode("utf-8"))
 
-    def upload_stream(self, key: str, file_path: str,
-                      metadata: Optional[StorageMetadata] = None) -> str:
+    def upload_stream(
+        self, key: str, file_path: str, metadata: Optional[StorageMetadata] = None
+    ) -> str:
         """Потоково загрузить файл в облако с шифрованием.
 
         Используется для больших файлов — данные читаются и шифруются
@@ -513,19 +511,18 @@ class CloudStorageBackend(StorageBackend):
                 if metadata:
                     meta_data = metadata.to_dict()
                     meta_data["sha256"] = hashlib.sha256(
-                        src.read_bytes()
-                    ).hexdigest()
+                        src.read_bytes()).hexdigest()
                     meta_data["size"] = src.stat().st_size
                     self._client.upload(
                         self._meta_path(key),
                         json.dumps(meta_data).encode("utf-8"),
                     )
 
-                logger.info(f"Streamed {src.stat().st_size} bytes to cloud: {key}")
+                logger.info(
+                    f"Streamed {src.stat().st_size} bytes to cloud: {key}")
             except Exception as e:
                 raise CloudStorageError(
-                    f"Failed to stream upload '{key}': {e}"
-                ) from e
+                    f"Failed to stream upload '{key}': {e}") from e
 
             return key
 
@@ -563,13 +560,13 @@ class CloudStorageBackend(StorageBackend):
                 raise CloudStorageError(f"Key not found in cloud: {key}")
             except Exception as e:
                 raise CloudStorageError(
-                    f"Failed to download '{key}': {e}"
-                ) from e
+                    f"Failed to download '{key}': {e}") from e
 
             return str(out)
 
-    def sync_from_local(self, local_dir: str,
-                        exclude: Optional[List[str]] = None) -> int:
+    def sync_from_local(
+        self, local_dir: str, exclude: Optional[List[str]] = None
+    ) -> int:
         """Синхронизировать локальную директорию с облаком.
 
         Args:
@@ -631,8 +628,7 @@ class CloudStorageBackend(StorageBackend):
                 return {"total_bytes": total, "file_count": count}
             except Exception as e:
                 raise CloudStorageError(
-                    f"Failed to get cloud disk usage: {e}"
-                ) from e
+                    f"Failed to get cloud disk usage: {e}") from e
 
     def __enter__(self):
         self.initialize()

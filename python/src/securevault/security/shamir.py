@@ -36,17 +36,14 @@ _PRIME = 257
 
 class ShamirError(Exception):
     """Базовое исключение для Shamir Secret Sharing."""
-    pass
 
 
 class InvalidShareError(ShamirError):
     """Невалидная часть секрета."""
-    pass
 
 
 class InsufficientSharesError(ShamirError):
     """Недостаточно частей для восстановления."""
-    pass
 
 
 class Share:
@@ -129,10 +126,12 @@ class Share:
         value_len = int.from_bytes(data[6:8], "big")
 
         if len(data) < 8 + value_len + 4:
-            raise InvalidShareError(f"Share data too short for value length {value_len}")
+            raise InvalidShareError(
+                f"Share data too short for value length {value_len}"
+            )
 
-        value = data[8:8 + value_len]
-        checksum = data[8 + value_len:8 + value_len + 4]
+        value = data[8: 8 + value_len]
+        checksum = data[8 + value_len: 8 + value_len + 4]
 
         share = Share(index, value, checksum)
         if not share.verify():
@@ -230,8 +229,7 @@ class ShamirSecretSharing:
         result = 0
         for coeff in reversed(coefficients):
             result = ShamirSecretSharing._add(
-                ShamirSecretSharing._mul(result, x),
-                coeff
+                ShamirSecretSharing._mul(result, x), coeff
             )
         return result
 
@@ -264,24 +262,19 @@ class ShamirSecretSharing:
                 xj = points[j][0]
 
                 numerator = ShamirSecretSharing._mul(
-                    numerator,
-                    ShamirSecretSharing._sub(x, xj)
+                    numerator, ShamirSecretSharing._sub(x, xj)
                 )
                 denominator = ShamirSecretSharing._mul(
-                    denominator,
-                    ShamirSecretSharing._sub(xi, xj)
+                    denominator, ShamirSecretSharing._sub(xi, xj)
                 )
 
             # Li(x) = numerator / denominator
             li = ShamirSecretSharing._mul(
-                numerator,
-                ShamirSecretSharing._inv(denominator)
+                numerator, ShamirSecretSharing._inv(denominator)
             )
 
             result = ShamirSecretSharing._add(
-                result,
-                ShamirSecretSharing._mul(yi, li)
-            )
+                result, ShamirSecretSharing._mul(yi, li))
 
         return result
 
@@ -313,7 +306,8 @@ class ShamirSecretSharing:
             ValueError: Если threshold > total или threshold < 2.
         """
         if threshold > total:
-            raise ValueError(f"Threshold ({threshold}) cannot exceed total ({total})")
+            raise ValueError(
+                f"Threshold ({threshold}) cannot exceed total ({total})")
         if threshold < 2:
             raise ValueError(f"Threshold must be at least 2, got {threshold}")
         if total > 255:
@@ -330,9 +324,8 @@ class ShamirSecretSharing:
 
             # Генерируем случайные коэффициенты для полинома степени K-1
             # coeffs[0] = секретный байт (свободный член)
-            coeffs = [secret_byte] + [
-                os.urandom(1)[0] for _ in range(threshold - 1)
-            ]
+            coeffs = [secret_byte] + \
+                [os.urandom(1)[0] for _ in range(threshold - 1)]
 
             # Вычисляем значение полинома в точках x = 1..total
             for share_idx in range(total):
@@ -375,12 +368,15 @@ class ShamirSecretSharing:
         # Проверяем целостность всех частей
         for share in shares:
             if not share.verify():
-                raise InvalidShareError(f"Share {share.index} failed checksum verification")
+                raise InvalidShareError(
+                    f"Share {share.index} failed checksum verification"
+                )
 
         # Проверяем, что все части одной длины
         value_lengths = {len(s.value) for s in shares}
         if len(value_lengths) != 1:
-            raise InvalidShareError("All shares must have the same value length")
+            raise InvalidShareError(
+                "All shares must have the same value length")
 
         secret_len = len(shares[0].value)
 
@@ -440,6 +436,7 @@ class ShamirSecretSharing:
 # ============================================================================
 # ФУНКЦИИ ВЫСОКОГО УРОВНЯ
 # ============================================================================
+
 
 def split_secret(secret: bytes, total: int = 5, threshold: int = 3) -> List[bytes]:
     """

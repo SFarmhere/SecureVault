@@ -9,7 +9,7 @@ import hashlib
 import logging
 import threading
 from pathlib import Path
-from typing import Dict, Iterable, Iterator, List, Optional, Tuple
+from typing import Dict, Iterable, Iterator, List
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +43,9 @@ class CdcChunker:
     """
 
     # Параметры по умолчанию (аналог FastCDC)
-    AVG_CHUNK_SIZE = 64 * 1024      # 64 KB
-    MIN_CHUNK_SIZE = 16 * 1024      # 16 KB
-    MAX_CHUNK_SIZE = 256 * 1024     # 256 KB
+    AVG_CHUNK_SIZE = 64 * 1024  # 64 KB
+    MIN_CHUNK_SIZE = 16 * 1024  # 16 KB
+    MAX_CHUNK_SIZE = 256 * 1024  # 256 KB
 
     # Маска для определения границы: lower 13 bits == 0
     # Вероятность границы ~ 1/8192
@@ -65,10 +65,12 @@ class CdcChunker:
             seed = (seed * 0x5851F42D + 0x9E3779B9) & 0xFFFFFFFF
             cls.GEAR_TABLE.append(seed | 1)  # нечётные значения
 
-    def __init__(self,
-                 avg_size: int = AVG_CHUNK_SIZE,
-                 min_size: int = MIN_CHUNK_SIZE,
-                 max_size: int = MAX_CHUNK_SIZE):
+    def __init__(
+        self,
+        avg_size: int = AVG_CHUNK_SIZE,
+        min_size: int = MIN_CHUNK_SIZE,
+        max_size: int = MAX_CHUNK_SIZE,
+    ):
         self.avg_size = max(avg_size, 1024)
         self.min_size = max(min_size, 1024)
         self.max_size = max(max_size, self.min_size)
@@ -105,9 +107,9 @@ class CdcChunker:
         for i in range(start + window_size, max_end):
             # Скользящий хеш: добавляем новый байт, вычитаем старый
             hash_val = (
-                (hash_val << 1) +
-                (self.GEAR_TABLE[data[i]] ^
-                 self.GEAR_TABLE[data[i - window_size]])
+                (hash_val << 1)
+                + (self.GEAR_TABLE[data[i]] ^
+                   self.GEAR_TABLE[data[i - window_size]])
             ) & 0xFFFFFFFF
 
             # Граница: если перешли минимальный размер и хеш попал в маску
@@ -117,9 +119,12 @@ class CdcChunker:
         return max_end
 
     @staticmethod
-    def iter_chunks(path: Path, avg_size: int = AVG_CHUNK_SIZE,
-                    min_size: int = MIN_CHUNK_SIZE,
-                    max_size: int = MAX_CHUNK_SIZE) -> Iterator[Chunk]:
+    def iter_chunks(
+        path: Path,
+        avg_size: int = AVG_CHUNK_SIZE,
+        min_size: int = MIN_CHUNK_SIZE,
+        max_size: int = MAX_CHUNK_SIZE,
+    ) -> Iterator[Chunk]:
         """Итеративное разбиение файла на блоки (поточная обработка)."""
         chunker = CdcChunker(avg_size, min_size, max_size)
         with path.open("rb") as f:
@@ -163,7 +168,8 @@ class ManifestStore:
             hashes = []
             for chunk in chunks:
                 hashes.append(chunk.hash_val)
-                self._blocks[chunk.hash_val] = self._blocks.get(chunk.hash_val, 0) + 1
+                self._blocks[chunk.hash_val] = self._blocks.get(
+                    chunk.hash_val, 0) + 1
             # Старый файл с тем же id заменяем
             old = self._files.pop(file_id, [])
             for h in old:

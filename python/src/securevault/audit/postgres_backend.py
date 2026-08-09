@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 class PostgresBackendError(Exception):
     """Ошибка PostgreSQL бэкенда."""
-    pass
 
 
 class PostgresBackend:
@@ -50,6 +49,7 @@ class PostgresBackend:
         """Инициализировать подключение к PostgreSQL."""
         try:
             import psycopg2
+
             self._conn = psycopg2.connect(
                 host=self.host,
                 port=self.port,
@@ -59,9 +59,13 @@ class PostgresBackend:
             )
             self._init_schema()
             self._initialized = True
-            logger.info(f"PostgreSQL backend initialized: {self.host}:{self.port}/{self.dbname}")
+            logger.info(
+                f"PostgreSQL backend initialized: {self.host}:{self.port}/{self.dbname}"
+            )
         except ImportError:
-            raise PostgresBackendError("psycopg2 not installed. Install with: pip install psycopg2-binary")
+            raise PostgresBackendError(
+                "psycopg2 not installed. Install with: pip install psycopg2-binary"
+            )
         except Exception as e:
             raise PostgresBackendError(f"PostgreSQL connection failed: {e}")
 
@@ -178,9 +182,17 @@ class PostgresBackend:
             for row in rows:
                 data = dict(zip(columns, row))
                 if data.get("details"):
-                    data["details"] = json.loads(data["details"]) if isinstance(data["details"], str) else data["details"]
+                    data["details"] = (
+                        json.loads(data["details"])
+                        if isinstance(data["details"], str)
+                        else data["details"]
+                    )
                 if data.get("metadata"):
-                    data["metadata"] = json.loads(data["metadata"]) if isinstance(data["metadata"], str) else data["metadata"]
+                    data["metadata"] = (
+                        json.loads(data["metadata"])
+                        if isinstance(data["metadata"], str)
+                        else data["metadata"]
+                    )
                 result.append(data)
             return result
 

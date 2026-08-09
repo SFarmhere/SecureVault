@@ -7,9 +7,8 @@
 Зависимости: boto3
 """
 
-import io
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -184,8 +183,9 @@ class S3Client:
                 raise FileNotFoundError(f"File not found in S3: {path}")
             raise
 
-    def upload_stream(self, path: str, file_path: str,
-                      encrypt_fn=None, chunk_size: int = 65536) -> None:
+    def upload_stream(
+        self, path: str, file_path: str, encrypt_fn=None, chunk_size: int = 65536
+    ) -> None:
         """Потоково загрузить файл.
 
         Args:
@@ -200,6 +200,7 @@ class S3Client:
         if encrypt_fn:
             # Шифруем кусками и загружаем
             import tempfile
+
             with tempfile.NamedTemporaryFile(delete=False, suffix=".bin") as tmp:
                 tmp_path = tmp.name
                 with open(file_path, "rb") as f:
@@ -213,12 +214,14 @@ class S3Client:
                 client.upload_file(tmp_path, self.bucket, key)
             finally:
                 import os
+
                 os.unlink(tmp_path)
         else:
             client.upload_file(file_path, self.bucket, key)
 
-    def download_stream(self, path: str, output_path: str,
-                        decrypt_fn=None, chunk_size: int = 65536) -> None:
+    def download_stream(
+        self, path: str, output_path: str, decrypt_fn=None, chunk_size: int = 65536
+    ) -> None:
         """Потоково скачать файл.
 
         Args:
@@ -233,6 +236,7 @@ class S3Client:
         if decrypt_fn:
             # Скачиваем и расшифровываем кусками
             import tempfile
+
             with tempfile.NamedTemporaryFile(delete=False, suffix=".bin") as tmp:
                 tmp_path = tmp.name
 
@@ -246,6 +250,7 @@ class S3Client:
                         dst.write(decrypt_fn(chunk))
             finally:
                 import os
+
                 os.unlink(tmp_path)
         else:
             client.download_file(self.bucket, key, output_path)

@@ -5,14 +5,13 @@
 
 import json
 import logging
-from typing import Optional, List, Dict, Any
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
 
 class SplunkBackendError(Exception):
     """Ошибка Splunk бэкенда."""
-    pass
 
 
 class SplunkBackend:
@@ -39,6 +38,7 @@ class SplunkBackend:
             raise SplunkBackendError("Splunk HEC token is required")
         try:
             import requests
+
             self._requests = requests
             self._initialized = True
             logger.info(f"Splunk backend initialized: {self.host}:{self.port}")
@@ -67,8 +67,7 @@ class SplunkBackend:
 
         try:
             resp = self._requests.post(
-                url, headers=headers, data=json.dumps(payload)
-            )
+                url, headers=headers, data=json.dumps(payload))
             resp.raise_for_status()
         except Exception as e:
             raise SplunkBackendError(f"Splunk write failed: {e}")
