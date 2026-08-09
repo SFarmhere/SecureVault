@@ -750,20 +750,16 @@ class AuditManager:
                 result_list = [e for e in result_list if e.result == result]
 
             if event_type:
-                result_list = [
-                    e for e in result_list if e.event_type == event_type]
+                result_list = [e for e in result_list if e.event_type == event_type]
 
             if severity:
-                result_list = [
-                    e for e in result_list if e.severity == severity]
+                result_list = [e for e in result_list if e.severity == severity]
 
             if start_time:
-                result_list = [
-                    e for e in result_list if e.timestamp >= start_time]
+                result_list = [e for e in result_list if e.timestamp >= start_time]
 
             if end_time:
-                result_list = [
-                    e for e in result_list if e.timestamp <= end_time]
+                result_list = [e for e in result_list if e.timestamp <= end_time]
 
             if source:
                 result_list = [e for e in result_list if e.source == source]
@@ -772,7 +768,7 @@ class AuditManager:
             result_list.sort(key=lambda e: e.timestamp, reverse=True)
 
             # Пагинация
-            result_list = result_list[offset: offset + limit]
+            result_list = result_list[offset : offset + limit]
 
             return result_list
 
@@ -828,12 +824,10 @@ class AuditManager:
                 result_list = [e for e in result_list if e.result == result]
 
             if event_type:
-                result_list = [
-                    e for e in result_list if e.event_type == event_type]
+                result_list = [e for e in result_list if e.event_type == event_type]
 
             if severity:
-                result_list = [
-                    e for e in result_list if e.severity == severity]
+                result_list = [e for e in result_list if e.severity == severity]
 
             return len(result_list)
 
@@ -997,8 +991,7 @@ class AuditManager:
             else:
                 raise AuditExportError(f"Unsupported format: {format}")
 
-            logger.info(
-                f"Audit exported: {len(entries)} entries -> {output_path}")
+            logger.info(f"Audit exported: {len(entries)} entries -> {output_path}")
             return len(entries)
 
         except Exception as e:
@@ -1028,8 +1021,7 @@ class AuditManager:
         try:
             input_file = Path(input_path)
             if not input_file.exists():
-                raise AuditNotFoundError(
-                    f"Import file not found: {input_path}")
+                raise AuditNotFoundError(f"Import file not found: {input_path}")
 
             entries_data = []
             if format == "json":
@@ -1070,8 +1062,7 @@ class AuditManager:
                 if self._entries:
                     self._last_hash = self._entries[-1].entry_hash
 
-            logger.info(
-                f"Audit imported: {imported} entries from {input_path}")
+            logger.info(f"Audit imported: {imported} entries from {input_path}")
             return imported
 
         except Exception as e:
@@ -1282,14 +1273,12 @@ class AuditManager:
         try:
             if self._signing_key:
                 # Используем предоставленный ключ
-                self._signing_pubkey = self._extract_public_key(
-                    self._signing_key)
+                self._signing_pubkey = self._extract_public_key(self._signing_key)
             elif key_path.exists():
                 # Загружаем существующий ключ
                 with open(key_path, "rb") as f:
                     self._signing_key = f.read()
-                self._signing_pubkey = self._extract_public_key(
-                    self._signing_key)
+                self._signing_pubkey = self._extract_public_key(self._signing_key)
             else:
                 # Генерируем новый ключ
                 private_pem, public_pem = crypto.generate_ecdsa_keypair("p256")
@@ -1365,8 +1354,7 @@ class AuditManager:
             signature = bytes.fromhex(entry.signature)
             return crypto.verify_ecdsa(data, signature, self._signing_pubkey)
         except Exception as e:
-            logger.error(
-                f"Failed to verify signature for {entry.entry_id}: {e}")
+            logger.error(f"Failed to verify signature for {entry.entry_id}: {e}")
             return False
 
     def _get_signing_data(self, entry: AuditEntry) -> bytes:
@@ -1558,8 +1546,7 @@ class AuditManager:
             session_id=data.get("session_id"),
             request_id=data.get("request_id"),
             correlation_id=data.get("correlation_id"),
-            metadata=json.loads(data["metadata"]) if data.get(
-                "metadata") else {},
+            metadata=json.loads(data["metadata"]) if data.get("metadata") else {},
         )
 
     def _enforce_limits(self) -> None:

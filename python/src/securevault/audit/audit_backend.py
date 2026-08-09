@@ -88,12 +88,11 @@ class MemoryBackend(AuditBackend):
             for key, value in filters.items():
                 result = [e for e in result if e.get(key) == value]
         result.sort(key=lambda e: e.get("timestamp", ""), reverse=True)
-        return result[offset: offset + limit]
+        return result[offset : offset + limit]
 
     def delete(self, entry_id: str) -> bool:
         before = len(self._entries)
-        self._entries = [e for e in self._entries if e.get(
-            "entry_id") != entry_id]
+        self._entries = [e for e in self._entries if e.get("entry_id") != entry_id]
         return len(self._entries) < before
 
     def count(self, filters: Optional[Dict[str, Any]] = None) -> int:
@@ -291,7 +290,7 @@ class FileBackend(AuditBackend):
                     entries = [e for e in entries if e.get(key) == value]
 
             entries.sort(key=lambda e: e.get("timestamp", ""), reverse=True)
-            return entries[offset: offset + limit]
+            return entries[offset : offset + limit]
 
         except Exception as e:
             raise AuditBackendError(f"File read failed: {e}")
@@ -313,8 +312,7 @@ class FileBackend(AuditBackend):
             if len(entries) < before:
                 with open(self.file_path, "w", encoding="utf-8") as f:
                     for e in entries:
-                        f.write(json.dumps(
-                            e, ensure_ascii=False, default=str) + "\n")
+                        f.write(json.dumps(e, ensure_ascii=False, default=str) + "\n")
                 return True
             return False
 

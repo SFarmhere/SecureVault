@@ -201,8 +201,7 @@ class LibraryLoader:
             return lib
 
         except OSError as e:
-            raise LibraryLoadError(
-                f"Failed to load {lib_name} from {lib_path}: {e}")
+            raise LibraryLoadError(f"Failed to load {lib_name} from {lib_path}: {e}")
 
     def unload_library(self, lib_name: str) -> None:
         """Выгрузить библиотеку."""

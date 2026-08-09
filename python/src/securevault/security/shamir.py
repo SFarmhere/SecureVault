@@ -130,8 +130,8 @@ class Share:
                 f"Share data too short for value length {value_len}"
             )
 
-        value = data[8: 8 + value_len]
-        checksum = data[8 + value_len: 8 + value_len + 4]
+        value = data[8 : 8 + value_len]
+        checksum = data[8 + value_len : 8 + value_len + 4]
 
         share = Share(index, value, checksum)
         if not share.verify():
@@ -273,8 +273,7 @@ class ShamirSecretSharing:
                 numerator, ShamirSecretSharing._inv(denominator)
             )
 
-            result = ShamirSecretSharing._add(
-                result, ShamirSecretSharing._mul(yi, li))
+            result = ShamirSecretSharing._add(result, ShamirSecretSharing._mul(yi, li))
 
         return result
 
@@ -306,8 +305,7 @@ class ShamirSecretSharing:
             ValueError: Если threshold > total или threshold < 2.
         """
         if threshold > total:
-            raise ValueError(
-                f"Threshold ({threshold}) cannot exceed total ({total})")
+            raise ValueError(f"Threshold ({threshold}) cannot exceed total ({total})")
         if threshold < 2:
             raise ValueError(f"Threshold must be at least 2, got {threshold}")
         if total > 255:
@@ -324,8 +322,7 @@ class ShamirSecretSharing:
 
             # Генерируем случайные коэффициенты для полинома степени K-1
             # coeffs[0] = секретный байт (свободный член)
-            coeffs = [secret_byte] + \
-                [os.urandom(1)[0] for _ in range(threshold - 1)]
+            coeffs = [secret_byte] + [os.urandom(1)[0] for _ in range(threshold - 1)]
 
             # Вычисляем значение полинома в точках x = 1..total
             for share_idx in range(total):
@@ -375,8 +372,7 @@ class ShamirSecretSharing:
         # Проверяем, что все части одной длины
         value_lengths = {len(s.value) for s in shares}
         if len(value_lengths) != 1:
-            raise InvalidShareError(
-                "All shares must have the same value length")
+            raise InvalidShareError("All shares must have the same value length")
 
         secret_len = len(shares[0].value)
 
