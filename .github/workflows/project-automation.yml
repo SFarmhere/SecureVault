@@ -1,33 +1,226 @@
 name: Update Project Dates
 
 on:
-  issues:
-    types: [labeled, unlabeled]
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
 
 jobs:
   update-dates:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-
     steps:
-      - name: Get current date
-        id: date
-        run: echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
-
-      - name: Set Start Date when In Progress label is added
-        if: github.event.action == 'labeled' && github.event.label.name == 'In Progress'
-        uses: nipe0324/update-project-v2-item-field@v2.0.2
+      - name: Update Project Dates
+        uses: actions/github-script@v7
         with:
-          project-url: https://github.com/users/SFarmhere/projects/3
           github-token: ${{ secrets.PROJECT_TOKEN }}
-          field-name: Start Date
-          field-value: ${{ steps.date.outputs.date }}
+          script: |
+            const projectOwner = "SFarmhere";
+            const projectNumber = 3;
 
-      - name: Set Target Date when Done label is added
-        if: github.event.action == 'labeled' && github.event.label.name == 'Done'
-        uses: nipe0324/update-project-v2-item-field@v2.0.2
-        with:
-          project-url: https://github.com/users/SFarmhere/projects/3
-          github-token: ${{ secrets.PROJECT_TOKEN }}
-          field-name: Target Date
-          field-value: ${{ steps.date.outputs.date }}
+            const today = new Date().toISOString().slice(0, 10);
+
+            console.log(`Checking project ${projectOwner}#${projectNumber}`);
+            console.log(`Today's date: ${today}`);
+
+            const projectQuery = `
+              query GetProject($login: String!, $number: Int!) {
+                user(login: $login) {
+                  projectV2(number: $number) {
+                    id
+                    title
+                    fields(first: 50) {
+                      nodes {
+                        __typename
+                        ... on ProjectV2Field {
+                          id
+                          name
+                        }
+                        ... on ProjectV2SingleSelectField {
+                          id
+                          name
+                        }
+                        ... on ProjectV2IterationField {
+                          id
+                          name
+                        }
+                      }
+                    }
+                    items(first: 100) {
+                      nodes {
+                        id
+                        content {
+                          __typename
+                          ... on Issue {
+                            id
+                            number
+                            title
+                            timelineItems(first: 20, itemTypes: [PROJECT_V2_ITEM_STATUS_CHANGED_EVENT]) {
+                              nodes {
+                                __typename
+                                ... on ProjectV2ItemStatusChangedEvent {
+                                  id
+                                  createdAt
+                                  previousStatus
+                                  status
+                                  project {
+                                    id
+                                  }
+                                }
+                              }
+                            }
+                          }
+                          ... on PullRequest {
+                            id
+                            number
+                            title
+                            timelineItems(first: 20, itemTypes: [PROJECT_V2_ITEM_STATUS_CHANGED_EVENT]) {
+                              nodes {
+                                __typename
+                                ... on ProjectV2ItemStatusChangedEvent {
+                                  id
+                                  createdAt
+                                  previousStatus
+                                  status
+                                  project {
+                                    id
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        fieldValues(first: 50) {
+                          nodes {
+                            __typename
+                            ... on ProjectV2ItemFieldDateValue {
+                              field {
+                                ... on ProjectV2Field {
+                                  id
+                                  name
+                                }
+                              }
+                              date
+                            }
+                            ... on ProjectV2ItemFieldSingleSelectValue {
+                              field {
+                                ... on ProjectV2SingleSelectField {
+                                  id
+                                  name
+                                }
+                              }
+                              name
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+
+            const result = await github.graphql(projectQuery, {
+              login: projectOwner,
+              number: projectNumber
+            });
+
+            const project = result.user?.projectV2;
+
+            if (!project) {
+              core.setFailed(`Project #${projectNumber} for user ${projectOwner} was not found.`);
+              return;
+            }
+
+            console.log(`Project found: "${project.title}"`);
+            console.log(`Project ID: ${project.id}`);
+
+            const fields = project.fields.nodes.filter(Boolean);
+
+            const startDateField = fields.find(field => field.name === "Start date");
+            const targetDateField = fields.find(field => field.name === "Target date");
+
+            if (!startDateField) {
+              core.setFailed('Field "Start date" was not found.');
+              return;
+            }
+            if (!targetDateField) {
+              core.setFailed('Field "Target date" was not found.');
+              return;
+            }
+
+            console.log(`Start date field: ${startDateField.id}`);
+            console.log(`Target date field: ${targetDateField.id}`);
+
+            async function setDateField(itemId, fieldId, date) {
+              const mutation = `
+                mutation UpdateDate($projectId: ID!, $itemId: ID!, $fieldId: ID!, $date: Date!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: $projectId
+                    itemId: $itemId
+                    fieldId: $fieldId
+                    value: { date: $date }
+                  }) {
+                    projectV2Item {
+                      id
+                    }
+                  }
+                }
+              `;
+              await github.graphql(mutation, {
+                projectId: project.id,
+                itemId,
+                fieldId,
+                date
+              });
+            }
+
+            for (const item of project.items.nodes) {
+              if (!item || !item.content) continue;
+
+              const content = item.content;
+              if (content.__typename !== "Issue" && content.__typename !== "PullRequest") continue;
+
+              const issueNumber = content.number;
+              const issueTitle = content.title;
+
+              const statusEvents = content.timelineItems.nodes
+                .filter(event =>
+                  event &&
+                  event.__typename === "ProjectV2ItemStatusChangedEvent" &&
+                  event.project?.id === project.id
+                )
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+              if (statusEvents.length === 0) {
+                console.log(`#${issueNumber} "${issueTitle}": no status-change events.`);
+                continue;
+              }
+
+              const latestStatusEvent = statusEvents[0];
+              const currentStatus = latestStatusEvent.status;
+              const previousStatus = latestStatusEvent.previousStatus;
+
+              console.log(`#${issueNumber} "${issueTitle}": ${previousStatus} -> ${currentStatus}`);
+
+              let currentStartDate = null;
+              let currentTargetDate = null;
+
+              for (const fieldValue of item.fieldValues.nodes) {
+                if (!fieldValue || fieldValue.__typename !== "ProjectV2ItemFieldDateValue") continue;
+                const fieldName = fieldValue.field?.name;
+                if (fieldName === "Start date") currentStartDate = fieldValue.date;
+                if (fieldName === "Target date") currentTargetDate = fieldValue.date;
+              }
+
+              if (currentStatus === "In progress" && !currentStartDate) {
+                console.log(`#${issueNumber}: setting Start date = ${today}`);
+                await setDateField(item.id, startDateField.id, today);
+              }
+
+              if (currentStatus === "Done" && !currentTargetDate) {
+                console.log(`#${issueNumber}: setting Target date = ${today}`);
+                await setDateField(item.id, targetDateField.id, today);
+              }
+            }
+
+            console.log("Project date update completed successfully.");
