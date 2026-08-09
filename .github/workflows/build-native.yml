@@ -114,12 +114,24 @@ jobs:
       # СОХРАНЕНИЕ АРТЕФАКТОВ (опционально)
       # ============================================================
       - name: Upload artifacts (Unix)
-        if: matrix.os != 'windows-latest' && success()
+        if: matrix.os == 'ubuntu-latest' && success()
         uses: actions/upload-artifact@v4
         with:
           name: securevault-${{ matrix.os }}
           path: |
             build/lib*.so
+            build/lib*.a
+            build/*_tests
+          retention-days: 7
+
+      - name: Upload artifacts (macOS)
+        if: matrix.os == 'macos-latest' && success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: securevault-${{ matrix.os }}
+          path: |
+            build/lib*.so
+            build/lib*.dylib
             build/lib*.a
             build/*_tests
           retention-days: 7
