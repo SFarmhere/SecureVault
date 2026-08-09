@@ -12,22 +12,22 @@ jobs:
     steps:
       - name: Get current date
         id: date
-        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+        run: echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
 
-      - name: Set "Start Date" when status becomes "In Progress"
-        if: contains(github.event.issue.labels.*.name, 'In Progress')
+      - name: Set Start Date when In Progress label is added
+        if: github.event.action == 'labeled' && github.event.label.name == 'In Progress'
         uses: nipe0324/update-project-v2-item-field@v2.0.2
         with:
-          project-url: https://github.com/orgs/<ваш_орг>/projects/<номер_проекта>
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          field-name: "Start Date"
-          field-value: "${{ steps.date.outputs.date }}"
+          project-url: https://github.com/users/SFarmhere/projects/3
+          github-token: ${{ secrets.PROJECT_TOKEN }}
+          field-name: Start Date
+          field-value: ${{ steps.date.outputs.date }}
 
-      - name: Set "Target date" when status becomes "Done"
-        if: contains(github.event.issue.labels.*.name, 'Done')
+      - name: Set Target Date when Done label is added
+        if: github.event.action == 'labeled' && github.event.label.name == 'Done'
         uses: nipe0324/update-project-v2-item-field@v2.0.2
         with:
-          project-url: https://github.com/orgs/<ваш_орг>/projects/<номер_проекта>
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          field-name: "Target date"
-          field-value: "${{ steps.date.outputs.date }}"
+          project-url: https://github.com/users/SFarmhere/projects/3
+          github-token: ${{ secrets.PROJECT_TOKEN }}
+          field-name: Target Date
+          field-value: ${{ steps.date.outputs.date }}
