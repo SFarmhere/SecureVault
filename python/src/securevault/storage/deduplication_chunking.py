@@ -71,8 +71,7 @@ class CdcChunker:
                  max_size: int = MAX_CHUNK_SIZE):
         self.avg_size = max(avg_size, 1024)
         self.min_size = max(min_size, 1024)
-        self.max_size = min(max(self.max_size if hasattr(self, 'max_size') else MAX_CHUNK_SIZE, self.min_size), self.max_size if hasattr(self, 'max_size') else MAX_CHUNK_SIZE)
-        self.max_size = max(self.max_size, self.min_size)
+        self.max_size = max(max_size, self.min_size)
         self.avg_size = max(self.avg_size, self.min_size)
         self.max_size = max(self.max_size, self.avg_size)
         self._init_gear()

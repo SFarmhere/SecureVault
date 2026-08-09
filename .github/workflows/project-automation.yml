@@ -19,7 +19,7 @@ jobs:
         uses: nipe0324/update-project-v2-item-field@v2.0.2
         with:
           project-url: https://github.com/orgs/<ваш_орг>/projects/<номер_проекта>
-          github-token: ${{ secrets.UPDATE_PROJECT_V2_PAT }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           field-name: "Start Date"
           field-value: "${{ steps.date.outputs.date }}"
 
@@ -28,6 +28,6 @@ jobs:
         uses: nipe0324/update-project-v2-item-field@v2.0.2
         with:
           project-url: https://github.com/orgs/<ваш_орг>/projects/<номер_проекта>
-          github-token: ${{ secrets.UPDATE_PROJECT_V2_PAT }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           field-name: "Target date"
           field-value: "${{ steps.date.outputs.date }}"
