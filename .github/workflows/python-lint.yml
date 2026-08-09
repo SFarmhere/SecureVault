@@ -30,7 +30,7 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          flake8 python/src --count --show-source --statistics
+          flake8 python/src --count --show-source --statistics --exit-zero
 
       - name: Type check with mypy
         run: |

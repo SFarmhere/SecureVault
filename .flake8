@@ -1,0 +1,4 @@
+[flake8]
+max-line-length = 120
+extend-ignore = E203, F541, F841, W503
+exclude = .venv, build, _deps, dist

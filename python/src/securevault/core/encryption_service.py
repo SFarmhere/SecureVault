@@ -590,7 +590,7 @@ class EncryptionService:
                     # Шифрование чанка
                     encrypted_chunk, _ = protection.encrypt(chunk_data, file_key)
                     encrypted_chunks.append(encrypted_chunk)
-                    total_size += len(encrypted_data)
+                    total_size += len(encrypted_chunk)
 
             # Объединение всех чанков
             encrypted_data = b"".join(encrypted_chunks)
