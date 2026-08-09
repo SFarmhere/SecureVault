@@ -13,6 +13,7 @@
 #include <iomanip>
 #include <ctime>
 #include <mutex>
+#include <cstdarg>
 
 namespace securevault {
 
@@ -72,7 +73,7 @@ ErrorCode ConsoleLogSink::flush() {
     return ErrorCode::SUCCESS;
 }
 
-std::string_view ConsoleLogSink::level_color(LogLevel level) const noexcept {
+const char* ConsoleLogSink::level_color(LogLevel level) const noexcept {
     switch (level) {
         case LogLevel::EMERGENCY:   return "\033[1;41m";  // White on red
         case LogLevel::ALERT:       return "\033[1;31m";  // Bold red
@@ -256,7 +257,7 @@ Logger& Logger::instance() {
 ErrorCode Logger::initialize(
     LogLevel min_level,
     std::filesystem::path log_dir,
-    std::string_view app_name) {
+    const char* app_name) {
 
     auto& logger = instance();
 
@@ -265,7 +266,7 @@ ErrorCode Logger::initialize(
     }
 
     logger.min_level_ = min_level;
-    logger.app_name_ = app_name;
+    logger.app_name_ = app_name ? app_name : "SecureVault";
 
     // Add console sink by default
     logger.add_sink(std::make_unique<ConsoleLogSink>(true));
@@ -273,7 +274,7 @@ ErrorCode Logger::initialize(
     // Add file sink if log directory is specified
     if (!log_dir.empty()) {
         std::filesystem::create_directories(log_dir);
-        auto log_path = log_dir / (std::string(app_name) + ".log");
+        auto log_path = log_dir / (logger.app_name_ + ".log");
         logger.add_sink(std::make_unique<FileLogSink>(log_path));
     }
 
@@ -281,8 +282,8 @@ ErrorCode Logger::initialize(
     logger.running_ = true;
     logger.worker_ = std::thread(&Logger::worker_thread, &logger);
 
-    LOG_INFO("shared", "logger", "Logger initialized: level={}, app={}",
-             log_level_to_string(min_level), app_name);
+    LOG_INFO("shared", "logger", "Logger initialized: level=%s, app=%s",
+             log_level_to_string(min_level), logger.app_name_.c_str());
 
     return ErrorCode::SUCCESS;
 }
@@ -329,24 +330,26 @@ LogLevel Logger::min_level() const noexcept {
 
 void Logger::log(
     LogLevel level,
-    std::string_view module,
-    std::string_view component,
-    std::string_view message,
-    std::source_location location) {
+    const char* module,
+    const char* component,
+    const char* message,
+    const char* file,
+    uint32_t line,
+    const char* function) {
 
-    if (!running_ || static_cast<uint32_t>(level) > static_cast<uint32_t>(min_level_)) {
+    if (!running_ || static_cast<uint32_t>(level) > static_cast<uint32_t>(min_level_.load())) {
         return;
     }
 
     LogEntry entry;
     entry.timestamp = Platform::now_ns();
     entry.level = level;
-    entry.module = module;
-    entry.component = component;
-    entry.message = message;
-    entry.file = location.file_name();
-    entry.line = location.line();
-    entry.function = location.function_name();
+    entry.module = module ? module : "";
+    entry.component = component ? component : "";
+    entry.message = message ? message : "";
+    entry.file = file ? file : "";
+    entry.line = line;
+    entry.function = function ? function : "";
     entry.thread_id = current_thread_id();
 
     // Sign if enabled
@@ -362,8 +365,29 @@ void Logger::log(
     queue_cv_.notify_one();
 }
 
+void Logger::logf(
+    LogLevel level,
+    const char* module,
+    const char* component,
+    const char* format,
+    ...) {
+
+    if (!running_ || static_cast<uint32_t>(level) > static_cast<uint32_t>(min_level_.load())) {
+        return;
+    }
+
+    // Format the message
+    char buffer[4096];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    log(level, module, component, buffer);
+}
+
 bool Logger::is_enabled(LogLevel level) const noexcept {
-    return running_ && static_cast<uint32_t>(level) <= static_cast<uint32_t>(min_level_);
+    return running_ && static_cast<uint32_t>(level) <= static_cast<uint32_t>(min_level_.load());
 }
 
 void Logger::flush() {
@@ -390,12 +414,12 @@ void Logger::enable_forensic_signing(bool enable) {
     forensic_signing_ = enable;
 }
 
-ErrorCode Logger::set_signing_key(std::span<const uint8_t> private_key_bytes) {
-    if (private_key_bytes.empty()) {
+ErrorCode Logger::set_signing_key(const uint8_t* key_data, size_t key_size) {
+    if (!key_data || key_size == 0) {
         return ErrorCode::INVALID_ARGUMENT;
     }
     std::lock_guard<std::mutex> lock(signing_mutex_);
-    signing_key_.assign(private_key_bytes.begin(), private_key_bytes.end());
+    signing_key_.assign(key_data, key_data + key_size);
     forensic_signing_ = true;
     return ErrorCode::SUCCESS;
 }
@@ -438,7 +462,7 @@ void Logger::worker_thread() {
 ErrorCode Logger::sign_entry(LogEntry& entry) {
     std::lock_guard<std::mutex> lock(signing_mutex_);
     if (signing_key_.empty()) {
-        return ErrorCode::KEY_NOT_FOUND;
+        return ErrorCode::INVALID_ARGUMENT;
     }
 
     // In a full implementation, this would use ECDSA P-256 signing.
@@ -460,7 +484,8 @@ uint64_t Logger::current_thread_id() {
 
 ErrorCode AuditLogger::initialize(
     std::filesystem::path audit_path,
-    std::span<const uint8_t> signing_key) {
+    const uint8_t* signing_key,
+    size_t key_size) {
 
     if (instance_) {
         return ErrorCode::ALREADY_INITIALIZED;
@@ -468,7 +493,9 @@ ErrorCode AuditLogger::initialize(
 
     instance_ = std::unique_ptr<AuditLogger>(new AuditLogger());
     instance_->audit_path_ = std::move(audit_path);
-    instance_->signing_key_.assign(signing_key.begin(), signing_key.end());
+    if (signing_key && key_size > 0) {
+        instance_->signing_key_.assign(signing_key, signing_key + key_size);
+    }
 
     // Open audit file in append-only mode
     auto dir = instance_->audit_path_.parent_path();
@@ -489,9 +516,9 @@ ErrorCode AuditLogger::initialize(
 }
 
 void AuditLogger::record(
-    std::string_view event_type,
-    std::string_view user_id,
-    std::string_view details,
+    const char* event_type,
+    const char* user_id,
+    const char* details,
     LogLevel severity) {
 
     if (!instance_) return;
@@ -503,9 +530,10 @@ void AuditLogger::record(
     entry.level = severity;
     entry.module = "audit";
     entry.component = "forensic";
-    entry.message = std::string(event_type) + " by " + std::string(user_id);
-    entry.structured_data = details;
-    entry.thread_id = Logger::current_thread_id();
+    entry.message = std::string(event_type ? event_type : "") + " by " +
+                    std::string(user_id ? user_id : "");
+    entry.structured_data = details ? details : "";
+    entry.thread_id = current_thread_id_helper();
 
     // Sign the entry
     entry.is_signed = true;
@@ -514,11 +542,11 @@ void AuditLogger::record(
     // Write as JSON line
     std::ostringstream json;
     json << "{";
-    json << "\"type\":\"" << event_type << "\",";
-    json << "\"user\":\"" << user_id << "\",";
+    json << "\"type\":\"" << (event_type ? event_type : "") << "\",";
+    json << "\"user\":\"" << (user_id ? user_id : "") << "\",";
     json << "\"timestamp\":" << entry.timestamp << ",";
     json << "\"severity\":\"" << log_level_to_string(severity) << "\",";
-    json << "\"details\":" << details;
+    json << "\"details\":" << (details ? details : "{}");
     json << ",\"signature\":\"";
     for (auto byte : entry.signature) {
         json << std::hex << std::setw(2) << std::setfill('0')
@@ -532,11 +560,13 @@ void AuditLogger::record(
 }
 
 bool AuditLogger::verify_integrity(
-    std::filesystem::path audit_path,
-    std::span<const uint8_t> public_key) {
+    const std::filesystem::path& audit_path,
+    const uint8_t* public_key,
+    size_t key_size) {
 
     (void)audit_path;
     (void)public_key;
+    (void)key_size;
     // Full implementation would:
     // 1. Read each JSON line
     // 2. Extract signature
@@ -584,6 +614,16 @@ ErrorCode AuditLogger::export_log(
 
     audit_out.flush();
     return ErrorCode::SUCCESS;
+}
+
+// ============================================================================
+// THREAD ID HELPER (accessible to both Logger and AuditLogger)
+// ============================================================================
+
+uint64_t current_thread_id_helper() {
+    std::ostringstream oss;
+    oss << std::this_thread::get_id();
+    return std::stoull(oss.str());
 }
 
 } // namespace securevault

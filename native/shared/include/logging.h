@@ -458,6 +458,9 @@ private:
 // AUDIT LOGGER (FORENSIC)
 // ============================================================================
 
+/// Get the current thread ID (helper accessible to all logging components)
+uint64_t current_thread_id_helper();
+
 /// Specialized logger for forensic audit trail
 /// All entries are automatically signed and stored in append-only format
 class AuditLogger {

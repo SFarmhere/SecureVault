@@ -252,6 +252,12 @@ list(APPEND SECUREVAULT_MODULE_INCLUDE_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/shared/include"
 )
 
+list(APPEND SECUREVAULT_NATIVE_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/shared/src/config.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/shared/src/logging.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/shared/src/platform.cpp"
+)
+
 # --------------------------------------------------------------------------
 # Модуль: crypto_module (AES, RSA, Kyber1024, ChaCha20, ECC, ГОСТ, KDF)
 # --------------------------------------------------------------------------
@@ -428,6 +434,9 @@ list(APPEND SECUREVAULT_MODULE_INCLUDE_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/pkcs11_module/src"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkcs11_module/src/adapters"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkcs11_module/src/session"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkcs11_module/src/key_operations"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkcs11_module/src/token_detection"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkcs11_module/src/certificate_ops"
 )
 
 list(APPEND SECUREVAULT_NATIVE_SOURCES
@@ -440,6 +449,13 @@ list(APPEND SECUREVAULT_NATIVE_SOURCES
     # Session management
     "${CMAKE_CURRENT_SOURCE_DIR}/pkcs11_module/src/session/session_manager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkcs11_module/src/session/slot_manager.cpp"
+
+    # Key operations
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkcs11_module/src/key_operations/key_generation.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkcs11_module/src/key_operations/key_management.cpp"
+
+    # Token detection
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkcs11_module/src/token_detection/token_detector.cpp"
 
     # Certificate operations
     "${CMAKE_CURRENT_SOURCE_DIR}/pkcs11_module/src/certificate_ops/certificate_import.cpp"

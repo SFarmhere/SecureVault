@@ -157,12 +157,13 @@ public:
     Aes256Key random_aes_key();
     AesGcmIv random_gcm_iv();
 
-private:
     CryptoContext() = default;
     ~CryptoContext() = default;
 
     CryptoContext(const CryptoContext&) = delete;
     CryptoContext& operator=(const CryptoContext&) = delete;
+
+private:
 
     static std::unique_ptr<CryptoContext> instance_;
     static bool initialized_;

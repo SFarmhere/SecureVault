@@ -63,10 +63,10 @@ ErrorCode Platform::initialize() {
     cached_cpu_features_ = detect_cpu_features();
     initialized_ = true;
 
-    LOG_INFO("shared", "platform", "Platform initialized: {} {} cores, {} MB RAM",
-        cached_cpu_features_.model_name,
+    LOG_INFO("shared", "platform", "Platform initialized: %s %u cores, %llu MB RAM",
+        cached_cpu_features_.model_name.c_str(),
         cached_cpu_features_.logical_cores,
-        total_physical_memory() / (1024 * 1024));
+        static_cast<unsigned long long>(total_physical_memory() / (1024 * 1024)));
 
     return ErrorCode::SUCCESS;
 }
@@ -339,19 +339,19 @@ void Platform::sleep_ns(uint64_t nanoseconds) {
 ErrorCode Platform::secure_random(MutableByteSpan buffer) {
     if (buffer.empty()) return ErrorCode::SUCCESS;
 #if defined(SECUREVAULT_PLATFORM_WINDOWS)
-    NTSTATUS status = BCryptGenRandom(nullptr, buffer.data(), 
-                                    static_cast<ULONG>(buffer.size()),
+    NTSTATUS status = BCryptGenRandom(nullptr, buffer.data, 
+                                    static_cast<ULONG>(buffer.size),
                                     BCRYPT_USE_SYSTEM_PREFERRED_RNG);
     return (status == 0) ? ErrorCode::SUCCESS : ErrorCode::ENCRYPTION_FAILED;
 #elif defined(SECUREVAULT_PLATFORM_LINUX)
-    if (getentropy(buffer.data(), buffer.size()) == 0) return ErrorCode::SUCCESS;
+    if (getentropy(buffer.data, buffer.size) == 0) return ErrorCode::SUCCESS;
     FILE* f = fopen("/dev/urandom", "rb");
     if (!f) return ErrorCode::ENCRYPTION_FAILED;
-    size_t r = fread(buffer.data(), 1, buffer.size(), f);
+    size_t r = fread(buffer.data, 1, buffer.size, f);
     fclose(f);
-    return r == buffer.size() ? ErrorCode::SUCCESS : ErrorCode::ENCRYPTION_FAILED;
+    return r == buffer.size ? ErrorCode::SUCCESS : ErrorCode::ENCRYPTION_FAILED;
 #else
-    return getentropy(buffer.data(), buffer.size()) == 0 ?
+    return getentropy(buffer.data, buffer.size) == 0 ?
            ErrorCode::SUCCESS : ErrorCode::ENCRYPTION_FAILED;
 #endif
 }

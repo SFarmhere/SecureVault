@@ -2,7 +2,7 @@
 #pragma once
 
 #ifdef _WIN32
-    #ifdef SECUREVAULT_EXPORTS
+    #if defined(SECUREVAULT_EXPORTS) || defined(SECUREVAULT_NATIVE_EXPORTS) || defined(SECUREVAULT_NATIVE_STATIC)
         #define SECUREVAULT_API __declspec(dllexport)
     #else
         #define SECUREVAULT_API __declspec(dllimport)
