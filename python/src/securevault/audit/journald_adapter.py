@@ -32,7 +32,8 @@ class JournaldAdapter:
             logger.info("Journald adapter initialized")
         except ImportError:
             self._initialized = False
-            logger.warning("systemd not available. Install with: pip install systemd")
+            logger.warning(
+                "systemd not available. Install with: pip install systemd")
 
     def write(self, entry: Dict[str, Any]) -> None:
         """Записать запись в journald."""

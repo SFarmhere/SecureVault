@@ -104,7 +104,8 @@ class AntiDebug:
     # ------------------------------------------------------------------------
 
     def _add_check(self, name: str, detected: bool, details: str = "") -> None:
-        self._checks.append({"name": name, "detected": detected, "details": details})
+        self._checks.append(
+            {"name": name, "detected": detected, "details": details})
         if detected:
             self._debugger_detected = True
         logger.debug(f"Anti-debug check {name}: detected={detected}")
@@ -130,7 +131,7 @@ class AntiDebug:
             pe_offset = int.from_bytes(data[0x3C:0x40], "little")
             if pe_offset + 4 > len(data):
                 return False
-            return data[pe_offset : pe_offset + 4] == b"PE\x00\x00"
+            return data[pe_offset: pe_offset + 4] == b"PE\x00\x00"
         except Exception:
             return False
 

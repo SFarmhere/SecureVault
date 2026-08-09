@@ -115,7 +115,8 @@ class DatabaseStorage:
 
     def get_key(self, key_id: str) -> Optional[Dict[str, Any]]:
         """Получить ключ по ID."""
-        cursor = self._session.execute("SELECT * FROM keys WHERE key_id = ?", (key_id,))
+        cursor = self._session.execute(
+            "SELECT * FROM keys WHERE key_id = ?", (key_id,))
         row = cursor.fetchone()
         return dict(row) if row else None
 

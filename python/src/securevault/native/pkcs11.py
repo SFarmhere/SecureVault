@@ -219,7 +219,8 @@ class TokenInfo:
     def __init__(self, c_info: CK_TOKEN_INFO, slot_id: int):
         self.slot_id = slot_id
         self.label = (
-            c_info.label.decode("utf-8", errors="replace").strip("\x00").strip()
+            c_info.label.decode(
+                "utf-8", errors="replace").strip("\x00").strip()
         )
         self.manufacturer_id = (
             c_info.manufacturer_id.decode("utf-8", errors="replace")
@@ -227,10 +228,12 @@ class TokenInfo:
             .strip()
         )
         self.model = (
-            c_info.model.decode("utf-8", errors="replace").strip("\x00").strip()
+            c_info.model.decode(
+                "utf-8", errors="replace").strip("\x00").strip()
         )
         self.serial_number = (
-            c_info.serial_number.decode("utf-8", errors="replace").strip("\x00").strip()
+            c_info.serial_number.decode(
+                "utf-8", errors="replace").strip("\x00").strip()
         )
         self.flags = c_info.flags
         self.max_session_count = c_info.ulMaxSessionCount
@@ -458,8 +461,10 @@ class PKCS11Module:
         self._load_library()
 
         # Загружаем функции PKCS#11 C API напрямую по именам
-        self._C_Initialize = self._get_function("C_Initialize", [CK_VOID_PTR], CK_RV)
-        self._C_Finalize = self._get_function("C_Finalize", [CK_VOID_PTR], CK_RV)
+        self._C_Initialize = self._get_function(
+            "C_Initialize", [CK_VOID_PTR], CK_RV)
+        self._C_Finalize = self._get_function(
+            "C_Finalize", [CK_VOID_PTR], CK_RV)
         self._C_GetSlotList = self._get_function(
             "C_GetSlotList",
             [CK_BBOOL, ctypes.POINTER(CK_SLOT_ID), ctypes.POINTER(CK_ULONG)],
@@ -489,7 +494,8 @@ class PKCS11Module:
             [CK_SESSION_HANDLE, CK_USER_TYPE, CK_VOID_PTR, CK_ULONG],
             CK_RV,
         )
-        self._C_Logout = self._get_function("C_Logout", [CK_SESSION_HANDLE], CK_RV)
+        self._C_Logout = self._get_function(
+            "C_Logout", [CK_SESSION_HANDLE], CK_RV)
         self._C_FindObjectsInit = self._get_function(
             "C_FindObjectsInit",
             [CK_SESSION_HANDLE, ctypes.POINTER(CK_ATTRIBUTE), CK_ULONG],
@@ -696,7 +702,8 @@ class PKCS11Module:
         )
         modulus_bits = CK_ULONG(0)
         bits_attr = CK_ATTRIBUTE(
-            CKA.MODULUS_BITS, ctypes.byref(modulus_bits), ctypes.sizeof(modulus_bits)
+            CKA.MODULUS_BITS, ctypes.byref(
+                modulus_bits), ctypes.sizeof(modulus_bits)
         )
 
         size_attrs = (CK_ATTRIBUTE * 4)()

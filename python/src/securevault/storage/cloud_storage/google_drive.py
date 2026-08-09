@@ -358,7 +358,8 @@ class GoogleDriveClient:
                 chunk = request.next_chunk()
                 if chunk is None:
                     break
-                data = chunk[0].execute() if hasattr(chunk[0], "execute") else chunk[0]
+                data = chunk[0].execute() if hasattr(
+                    chunk[0], "execute") else chunk[0]
                 if decrypt_fn:
                     out.write(decrypt_fn(data))
                 else:

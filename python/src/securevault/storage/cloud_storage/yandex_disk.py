@@ -158,7 +158,8 @@ class YandexDiskClient:
         disk_path = self._resolve_path(path)
 
         try:
-            self._request("GET", "/v1/disk/resources", params={"path": disk_path})
+            self._request("GET", "/v1/disk/resources",
+                          params={"path": disk_path})
             return True
         except Exception:
             return False
@@ -187,7 +188,7 @@ class YandexDiskClient:
                     full_path = item.get("path", "")
                     # Восстанавливаем относительный путь
                     rel = (
-                        full_path[len(disk_prefix) :]
+                        full_path[len(disk_prefix):]
                         if full_path.startswith(disk_prefix)
                         else full_path
                     )

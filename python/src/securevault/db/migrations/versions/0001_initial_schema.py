@@ -35,7 +35,8 @@ def upgrade() -> None:
             "mfa_enabled", sa.Boolean, nullable=False, server_default=sa.text("0")
         ),
         sa.Column("mfa_secret", sa.String(128), nullable=True),
-        sa.Column("status", sa.String(16), nullable=False, server_default="active"),
+        sa.Column("status", sa.String(16), nullable=False,
+                  server_default="active"),
         sa.Column(
             "failed_attempts", sa.Integer, nullable=False, server_default=sa.text("0")
         ),
@@ -59,7 +60,8 @@ def upgrade() -> None:
         sa.Column("key_type", sa.String(32), nullable=False),
         sa.Column("key_alias", sa.String(128), nullable=True),
         # active, archived, revoked, destroyed
-        sa.Column("key_status", sa.String(16), nullable=False, server_default="active"),
+        sa.Column("key_status", sa.String(16),
+                  nullable=False, server_default="active"),
         # ссылка на handle в HSM/токене
         sa.Column("key_handle", sa.Text, nullable=True),
         # завёрнутый ключ (для резерва)
@@ -110,8 +112,10 @@ def upgrade() -> None:
         sa.Column(
             "chunk_size", sa.Integer, nullable=False, server_default=sa.text("65536")
         ),
-        sa.Column("compression", sa.String(8), nullable=False, server_default="ZSTD"),
-        sa.Column("is_hidden", sa.Boolean, nullable=False, server_default=sa.text("0")),
+        sa.Column("compression", sa.String(8),
+                  nullable=False, server_default="ZSTD"),
+        sa.Column("is_hidden", sa.Boolean, nullable=False,
+                  server_default=sa.text("0")),
         sa.Column(
             "is_mounted", sa.Boolean, nullable=False, server_default=sa.text("0")
         ),
@@ -140,7 +144,8 @@ def upgrade() -> None:
         sa.Column(
             "event_type", sa.String(64), nullable=False, server_default="operation"
         ),
-        sa.Column("severity", sa.String(16), nullable=False, server_default="info"),
+        sa.Column("severity", sa.String(16),
+                  nullable=False, server_default="info"),
         sa.Column("details", sa.Text, nullable=True),  # JSON
         sa.Column("source", sa.String(128), nullable=True),
         sa.Column("prev_hash", sa.String(64), nullable=True),  # hash chain
@@ -148,7 +153,8 @@ def upgrade() -> None:
         sa.Column("entry_hash", sa.String(64), nullable=True),
         # ECDSA подпись
         sa.Column("signature", sa.Text, nullable=True),
-        sa.Column("status", sa.String(16), nullable=False, server_default="pending"),
+        sa.Column("status", sa.String(16), nullable=False,
+                  server_default="pending"),
         sa.Column("ip_address", sa.String(45), nullable=True),
         sa.Column("session_id", sa.String(64), nullable=True),
         sa.Column("request_id", sa.String(64), nullable=True),
@@ -184,7 +190,8 @@ def upgrade() -> None:
         sa.Column(
             "is_default", sa.Boolean, nullable=False, server_default=sa.text("0")
         ),
-        sa.Column("is_active", sa.Boolean, nullable=False, server_default=sa.text("1")),
+        sa.Column("is_active", sa.Boolean, nullable=False,
+                  server_default=sa.text("1")),
         sa.Column("created_at", sa.String(64), nullable=False),
         sa.Column("expires_at", sa.String(64), nullable=True),
         sa.Column("metadata", sa.Text, nullable=True),  # JSON
@@ -209,7 +216,8 @@ def upgrade() -> None:
         sa.Column("created_at", sa.String(64), nullable=False),
         sa.Column("expires_at", sa.String(64), nullable=False),
         sa.Column("last_activity", sa.String(64), nullable=True),
-        sa.Column("is_active", sa.Boolean, nullable=False, server_default=sa.text("1")),
+        sa.Column("is_active", sa.Boolean, nullable=False,
+                  server_default=sa.text("1")),
         sa.Index("ix_sessions_user", "user_id"),
         sa.Index("ix_sessions_expires", "expires_at"),
     )

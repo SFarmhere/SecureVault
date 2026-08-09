@@ -72,7 +72,8 @@ class DropboxClient:
         client = self._get_client()
         dropbox_path = self._resolve_path(path)
 
-        client.files_upload(data, dropbox_path, mode=dropbox.files.WriteMode.overwrite)
+        client.files_upload(data, dropbox_path,
+                            mode=dropbox.files.WriteMode.overwrite)
         logger.debug(f"Uploaded to Dropbox: {dropbox_path}")
 
     def download(self, path: str) -> bytes:
@@ -156,7 +157,7 @@ class DropboxClient:
                     # Восстанавливаем относительный путь
                     full_path = entry.path_display
                     rel = (
-                        full_path[len(dropbox_prefix) :]
+                        full_path[len(dropbox_prefix):]
                         if full_path.startswith(dropbox_prefix)
                         else full_path
                     )

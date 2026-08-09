@@ -203,8 +203,10 @@ class PolicyMetadata:
     updated_at: datetime = field(default_factory=datetime.utcnow)
 
     # Дополнительно
-    conditions: Dict[str, Any] = field(default_factory=dict)  # Дополнительные условия
-    metadata: Dict[str, Any] = field(default_factory=dict)  # Произвольные метаданные
+    conditions: Dict[str, Any] = field(
+        default_factory=dict)  # Дополнительные условия
+    metadata: Dict[str, Any] = field(
+        default_factory=dict)  # Произвольные метаданные
     version: int = 1  # Версия политики
     tags: List[str] = field(default_factory=list)
 
@@ -292,7 +294,8 @@ class PolicyDecision:
     policy_id: Optional[str] = None  # ID применимой политики
     policy_name: Optional[str] = None  # Имя применяемой политики
     reasons: List[str] = field(default_factory=list)  # Причины решения
-    conditions_required: List[str] = field(default_factory=list)  # Требуемые условия
+    conditions_required: List[str] = field(
+        default_factory=list)  # Требуемые условия
     warnings: List[str] = field(default_factory=list)  # Предупреждения
 
     def to_dict(self) -> Dict[str, Any]:
@@ -559,7 +562,8 @@ class PolicyManager:
 
         # Проверка существования
         if policy_id in self.policies:
-            raise PolicyAlreadyExistsError(f"Policy {policy_id} already exists")
+            raise PolicyAlreadyExistsError(
+                f"Policy {policy_id} already exists")
 
         # Создание метаданных
         policy = PolicyMetadata(
@@ -598,7 +602,8 @@ class PolicyManager:
             user_id="system",
             action=Action.POLICY_MANAGE,
             result="success",
-            details={"event": "create_policy", "policy_id": policy_id, "name": name},
+            details={"event": "create_policy",
+                     "policy_id": policy_id, "name": name},
         )
 
         logger.info(f"Policy created: {policy_id} ({name})")
@@ -667,7 +672,8 @@ class PolicyManager:
         Returns:
             Список активных политик, применимых к ролям/действию.
         """
-        active = [p for p in self.policies.values() if p.status == PolicyStatus.ACTIVE]
+        active = [p for p in self.policies.values() if p.status ==
+                  PolicyStatus.ACTIVE]
 
         # Проверка срока действия
         result = []
@@ -905,7 +911,8 @@ class PolicyManager:
         # Если политик нет и строгий режим - запрещаем
         if not active_policies:
             if self.strict_mode and roles:
-                reasons = [f"No policy allows action '{action}' for roles {roles}"]
+                reasons = [
+                    f"No policy allows action '{action}' for roles {roles}"]
                 return PolicyDecision(allowed=False, reasons=reasons)
             else:
                 # В нестрогом режиме разрешаем, если нет запретов
@@ -1234,7 +1241,7 @@ class PolicyManager:
 
         # Ограничение размера журнала
         if len(self.audit_log) > self._audit_limit:
-            self.audit_log = self.audit_log[-self._audit_limit :]
+            self.audit_log = self.audit_log[-self._audit_limit:]
 
         logger.debug(f"Audit: {user_id} -> {action} ({result})")
 
@@ -1413,12 +1420,14 @@ class PolicyManager:
 
         # Действия
         if allowed_actions:
-            invalid = [a for a in allowed_actions if a not in constants.POLICY_ACTIONS]
+            invalid = [
+                a for a in allowed_actions if a not in constants.POLICY_ACTIONS]
             if invalid:
                 raise InvalidPolicyError(f"Invalid actions: {invalid}")
 
         if denied_actions:
-            invalid = [a for a in denied_actions if a not in constants.POLICY_ACTIONS]
+            invalid = [
+                a for a in denied_actions if a not in constants.POLICY_ACTIONS]
             if invalid:
                 raise InvalidPolicyError(f"Invalid actions: {invalid}")
 
@@ -1591,7 +1600,8 @@ class PolicyManager:
         )
 
         self._save_policies()
-        logger.info(f"Created {len(self._default_policy_ids)} default policies")
+        logger.info(
+            f"Created {len(self._default_policy_ids)} default policies")
 
 
 # ============================================================================

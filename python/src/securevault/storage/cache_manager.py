@@ -92,7 +92,8 @@ class BlockCache:
             if not self._cache:
                 break
             # Найти самую старую запись
-            oldest_hash = min(self._cache, key=lambda h: self._cache[h].last_access)
+            oldest_hash = min(
+                self._cache, key=lambda h: self._cache[h].last_access)
             entry = self._cache.pop(oldest_hash)
             self._total_bytes -= entry.size
 
@@ -162,7 +163,8 @@ class FileChangeNotifier:
             try:
                 cb(event)
             except Exception as exc:
-                logger.warning("Listener error for %s: %s", event.event_type, exc)
+                logger.warning("Listener error for %s: %s",
+                               event.event_type, exc)
 
     def notify_file_created(self, path: str, size: int = 0) -> None:
         self.notify(FileEvent(path, "created", size))
