@@ -52,7 +52,7 @@ import json
 import hashlib
 import logging
 import shutil
-from typing import Optional, List, Dict, Any, BinaryIO
+from typing import Optional, List, Dict, Any, BinaryIO, Tuple
 from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass, field
