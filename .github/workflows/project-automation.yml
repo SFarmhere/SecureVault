@@ -1,0 +1,33 @@
+name: Update Project Dates
+
+on:
+  issues:
+    types: [labeled, unlabeled]
+
+jobs:
+  update-dates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Set "Start Date" when status becomes "In Progress"
+        if: contains(github.event.issue.labels.*.name, 'In Progress')
+        uses: nipe0324/update-project-v2-item-field@v2.0.2
+        with:
+          project-url: https://github.com/orgs/<ваш_орг>/projects/<номер_проекта>
+          github-token: ${{ secrets.UPDATE_PROJECT_V2_PAT }}
+          field-name: "Start Date"
+          field-value: "${{ steps.date.outputs.date }}"
+
+      - name: Set "Target date" when status becomes "Done"
+        if: contains(github.event.issue.labels.*.name, 'Done')
+        uses: nipe0324/update-project-v2-item-field@v2.0.2
+        with:
+          project-url: https://github.com/orgs/<ваш_орг>/projects/<номер_проекта>
+          github-token: ${{ secrets.UPDATE_PROJECT_V2_PAT }}
+          field-name: "Target date"
+          field-value: "${{ steps.date.outputs.date }}"
