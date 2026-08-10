@@ -1,0 +1,2 @@
+# Агрегированный файл для установки production-зависимостей
+-r requirements-prod.txt

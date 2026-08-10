@@ -1,0 +1,11 @@
+# Базовые зависимости для работы SecureVault (production)
+cryptography>=41.0
+PyYAML>=6.0
+
+# Опциональные зависимости
+# argon2-cffi>=23.0        # Argon2id KDF (fallback при отсутствии native)
+# psycopg2-binary>=2.9     # PostgreSQL backend для аудита
+# pynacl>=1.5              # ChaCha20-Poly1305, Ed25519
+# elasticsearch>=8.0       # Elasticsearch backend аудита
+# fastapi>=0.110           # Web-API
+# uvicorn[standard]>=0.29  # ASGI-сервер
