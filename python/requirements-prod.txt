@@ -1,11 +1,30 @@
 # Базовые зависимости для работы SecureVault (production)
-cryptography>=41.0
-PyYAML>=6.0
+# Эти пакеты требуются для запуска ядра пакета.
+# Не добавляйте сюда systemd-python и другие Linux-зависимости:
+# они не собираются на Windows. Для журнала use requirements-linux.txt.
 
-# Опциональные зависимости
-# argon2-cffi>=23.0        # Argon2id KDF (fallback при отсутствии native)
-# psycopg2-binary>=2.9     # PostgreSQL backend для аудита
-# pynacl>=1.5              # ChaCha20-Poly1305, Ed25519
-# elasticsearch>=8.0       # Elasticsearch backend аудита
-# fastapi>=0.110           # Web-API
-# uvicorn[standard]>=0.29  # ASGI-сервер
+# Криптография (AES-GCM, ECDSA, сериализация ключей)
+cryptography>=41.0
+# Загрузка конфигурации (YAML)
+PyYAML>=6.0
+# ORM/схема для миграций БД
+SQLAlchemy>=2.0
+# Миграции схемы БД (db/migrations)
+alembic>=1.12
+
+# Опциональные зависимости — ставьте их отдельно через requirements-optional.txt.
+# NOTE: не раскомментируйте их здесь с встроенными комментариями:
+# pip считает '# ...' частью версии и падает. Оставляйте строки-спецификаторы чистыми.
+argon2-cffi>=23.0
+pynacl>=1.5
+gostcrypto>=1.2
+psycopg2-binary>=2.9
+elasticsearch>=8.0
+requests>=2.31
+boto3>=1.28
+dropbox>=11.36
+# MEGA (модуль: from mega import Mega)
+mega.py>=1.0
+google-cloud-storage>=2.10
+google-api-python-client>=2.100
+google-auth>=2.23

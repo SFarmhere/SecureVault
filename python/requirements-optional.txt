@@ -1,0 +1,34 @@
+# Опциональные зависимости SecureVault (облачные провайдеры, доп. бэкенды).
+# Устанавливаются отдельно при необходимости.
+# Установка: pip install -r requirements-optional.txt
+
+# --- Крипто-возможности ---
+# Argon2id KDF (fallback при отсутствии native)
+argon2-cffi>=23.0
+# ChaCha20-Poly1305, Ed25519
+pynacl>=1.5
+# ГОСТ 28147-89 / Streebog / ГОСТ Р 34.10-2012
+gostcrypto>=1.2
+
+# --- Дополнительные бэкенды аудита и БД ---
+# PostgreSQL backend (аудит и сессии БД)
+psycopg2-binary>=2.9
+# Elasticsearch backend аудита
+elasticsearch>=8.0
+# journald backend аудита (только Linux) -> см. requirements-linux.txt
+
+# --- HTTP / облачные провайдеры хранилища ---
+# Splunk backend, Yandex Disk
+requests>=2.31
+# Amazon S3 / совместимые облака
+boto3>=1.28
+# Dropbox
+dropbox>=11.36
+# MEGA (модуль: from mega import Mega)
+mega.py>=1.0
+# Google Cloud Storage
+google-cloud-storage>=2.10
+# Google Drive
+google-api-python-client>=2.100
+# Аутентификация Google API
+google-auth>=2.23

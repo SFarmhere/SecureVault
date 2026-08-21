@@ -1,0 +1,7 @@
+# Linux-only зависимость для SecureVault.
+# ЭТОТ ФАЙЛ НЕЛЬЗЯ ставить на Windows (systemd-python требует systemd C-заголовки).
+# Установка (только на Linux-сервере):
+#    pip install -r requirements-linux.txt
+
+# journald backend аудита (только Linux)
+systemd-python>=235
